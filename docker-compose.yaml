@@ -9,7 +9,7 @@ services:
       - /var/lib/postgresql/data/
     # переменные окружения
     environment:
-      - POSTGRES_DB=later
+      - POSTGRES_DB=intershop
       - POSTGRES_USER=root
       - POSTGRES_PASSWORD=root
 
@@ -22,7 +22,7 @@ services:
       - db
     # переменные окружения
     environment:
-      - DB_NAME=later
+      - DB_NAME=intershop
       - POSTGRES_USER=root
       - POSTGRES_PASSWORD=root
       - DB_HOST=db
