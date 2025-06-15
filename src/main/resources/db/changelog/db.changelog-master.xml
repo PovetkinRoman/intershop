@@ -7,5 +7,9 @@
 
     <include file="001_create_items.xml" relativeToChangelogFile="true"/>
     <include file="002_add_items.xml" relativeToChangelogFile="true"/>
+    <include file="003_create_order.xml" relativeToChangelogFile="true"/>
+    <include file="006_create_order_item.xml" relativeToChangelogFile="true"/>
+<!--    <include file="004_add_order_id_for_item.xml" relativeToChangelogFile="true"/>-->
+<!--    <include file="005_add_total_sum.xml" relativeToChangelogFile="true"/>-->
 
 </databaseChangeLog>

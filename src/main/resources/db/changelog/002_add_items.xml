@@ -10,18 +10,18 @@
             <sqlCheck expectedResult="0">SELECT COUNT(*) FROM item</sqlCheck>
         </preConditions>
         <insert tableName="item">
-            <column name="title" value="1title"/>
-            <column name="description" value="1description"/>
-            <column name="img_path" value="test/path/1.jpg"/>
-            <column name="count" valueNumeric="1"/>
-            <column name="price" valueNumeric="10.00"/>
+            <column name="title" value="Тапки"/>
+            <column name="description" value="обычные резиновые тапки"/>
+            <column name="img_path" value="image/slippers.jpg"/>
+            <column name="count" valueNumeric="0"/>
+            <column name="price" valueNumeric="350.00"/>
         </insert>
         <insert tableName="item">
-            <column name="title" value="2title"/>
-            <column name="description" value="2description"/>
-            <column name="img_path" value="test/path/2.jpg"/>
-            <column name="count" valueNumeric="2"/>
-            <column name="price" valueNumeric="2.00"/>
+            <column name="title" value="Кепка"/>
+            <column name="description" value="чистый 100% хлопок"/>
+            <column name="img_path" value="image/cap.jpg"/>
+            <column name="count" valueNumeric="0"/>
+            <column name="price" valueNumeric="500.00"/>
         </insert>
     </changeSet>
 </databaseChangeLog>
