@@ -18,7 +18,6 @@ import java.nio.file.Paths;
 public class ImageController {
 
     private final Path rootLocation = Paths.get("src/main/resources/static");
-//"${'http://localhost:8080/'+item.getImgPath()}"
     @GetMapping("/image/{filename:.+}")
     public ResponseEntity<Resource> serveImage(@PathVariable String filename) {
         log.debug("serveImage: filename={}", filename);

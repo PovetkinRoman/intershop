@@ -19,8 +19,8 @@
                 <a th:text="'Заказ №'+${order.getId()}" th:href="'/orders/'+${order.getId()}"></a>
             </h2>
             <table>
-                <tr th:each="item : ${order.getItems()}">
-                    <td th:text="${item.getTitle()+' ('+item.getCount()+' шт.) '+(item.getPrice()*item.getCount())+' руб.'}"></td>
+                <tr th:each="orderItem : ${order.getOrderItems()}">
+                    <td th:text="${orderItem.getItem().getTitle()+' ('+orderItem.getCount()+' шт.) '+(orderItem.getQuantity()*orderItem.getCount())+' руб.'}"></td>
                 </tr>
             </table>
             <p>

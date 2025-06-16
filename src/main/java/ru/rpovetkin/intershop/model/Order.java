@@ -28,32 +28,29 @@ public class Order {
     public Order(List<Item> items, Boolean isPaid) {
         addItems(items);
         this.isPaid = isPaid;
-//        this.totalSum = items.stream()
-//                .map(item -> item.getPrice().multiply(BigDecimal.valueOf(item.getCount())))
-//                .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
     public void addItems(List<Item> items) {
         for (Item item : items) {
-            addItem(item, item.getPrice());
+            OrderItem orderItem =
+                    new OrderItem(this,
+                            item,
+                            item.getPrice(),
+                            item.getCount());
+            orderItems.add(orderItem);
         }
     }
 
-    public void addItem(Item item, BigDecimal quantity) {
-        OrderItem orderItem = new OrderItem(this, item, quantity);
-        orderItems.add(orderItem);
-    }
 
     public BigDecimal getTotalSum() {
-        return orderItems.stream().map(OrderItem::getQuantity).reduce(BigDecimal.ZERO, BigDecimal::add);
+        return orderItems.stream()
+                .map(oi -> oi.getQuantity().multiply(BigDecimal.valueOf(oi.getCount())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
     public List<Item> getItems() {
         return orderItems.stream().map(OrderItem::getItem).toList();
     }
-
-
-
 
     @Override
     public String toString() {

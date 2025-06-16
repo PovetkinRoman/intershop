@@ -29,10 +29,14 @@ public class OrderItem {
     @Column(nullable = false)
     private BigDecimal quantity;
 
-    public OrderItem(Order order, Item item, BigDecimal quantity) {
+    @Column(nullable = false)
+    private Integer count;
+
+    public OrderItem(Order order, Item item, BigDecimal quantity, Integer count) {
         this.order = order;
         this.item = item;
         this.quantity = quantity;
         this.id = new OrderItemId(order.getId(), item.getId());
+        this.count = count;
     }
 }
