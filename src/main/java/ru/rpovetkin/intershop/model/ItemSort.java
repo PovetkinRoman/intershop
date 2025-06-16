@@ -1,5 +1,5 @@
 package ru.rpovetkin.intershop.model;
 
-public enum Sort {
+public enum ItemSort {
     NO, ALPHA, PRICE
 }

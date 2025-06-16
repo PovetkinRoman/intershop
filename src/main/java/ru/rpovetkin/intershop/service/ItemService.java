@@ -1,5 +1,7 @@
 package ru.rpovetkin.intershop.service;
 
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import ru.rpovetkin.intershop.model.Action;
 import ru.rpovetkin.intershop.model.Item;
@@ -9,6 +11,7 @@ import java.util.Comparator;
 import java.util.List;
 
 @Service
+@Slf4j
 public class ItemService {
     private final ItemRepository itemRepository;
 
@@ -28,13 +31,25 @@ public class ItemService {
             case MINUS:
                 item.setCount(Math.max(item.getCount() - 1, 0));
                 break;
-            default: throw new IllegalStateException("Unexpected value: " + action);
+            default:
+                throw new IllegalStateException("Unexpected value: " + action);
         }
         itemRepository.save(item);
     }
 
     public List<Item> findAll() {
         return itemRepository.findAll().stream().sorted(Comparator.comparing(Item::getId)).toList();
+    }
+
+    public List<Item> findAllWithPagination(Pageable pageable, String search) {
+        List<Item> items = itemRepository.findAll(pageable).getContent();
+        log.debug("findAllWithPagination: {}", items.size());
+        if (!search.isEmpty()) {
+            return items.stream()
+                    .filter(i -> i.getTitle().toLowerCase().contains(search.toLowerCase()))
+                    .toList();
+        }
+        return items;
     }
 
     public List<Item> findAllInCart() {
