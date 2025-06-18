@@ -71,5 +71,4 @@ public class MainItemController {
         model.addAttribute("item", item);
         return "item";
     }
-
 }
