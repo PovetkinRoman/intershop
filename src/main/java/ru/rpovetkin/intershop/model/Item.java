@@ -21,4 +21,12 @@ public class Item {
     private String imgPath;
     private Integer count;
     private BigDecimal price;
+
+    public Item(String title, String description, String imgPath, Integer count, BigDecimal price) {
+        this.title = title;
+        this.description = description;
+        this.imgPath = imgPath;
+        this.count = count;
+        this.price = price;
+    }
 }
