@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+
+    <changeSet id="2" author="rpovetkin">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM item</sqlCheck>
+        </preConditions>
+        <insert tableName="item">
+            <column name="title" value="Тапки"/>
+            <column name="description" value="обычные резиновые тапки"/>
+            <column name="img_path" value="image/slippers.jpg"/>
+            <column name="count" valueNumeric="0"/>
+            <column name="price" valueNumeric="350.00"/>
+        </insert>
+        <insert tableName="item">
+            <column name="title" value="Кепка"/>
+            <column name="description" value="чистый 100% хлопок"/>
+            <column name="img_path" value="image/cap.jpg"/>
+            <column name="count" valueNumeric="0"/>
+            <column name="price" valueNumeric="500.00"/>
+        </insert>
+    </changeSet>
+</databaseChangeLog>
