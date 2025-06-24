@@ -1,18 +1,16 @@
 spring:
-  datasource:
-    url: jdbc:postgresql://db:5432/intershop
-    username: root
-    password: root
-    driver-class-name: org.postgresql.Driver
-  jpa:
-    hibernate:
-      ddl-auto: validate
-    show-sql: true
-  liquibase:
-    change-log: classpath:/db/changelog/db.changelog-master.xml
-    enabled: true
+  r2dbc:
+    url: r2dbc:postgresql://localhost:5434/intershop
+    username: intershop1
+    password: admin123
+  sql:
+    init:
+      mode: always
 
 logging:
   level:
     root: INFO
     ru.rpovetkin: DEBUG
+    org.springframework.web: TRACE
+    org.springframework.http.codec: DEBUG
+#    reactor.netty: DEBUG

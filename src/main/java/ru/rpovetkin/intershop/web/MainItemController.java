@@ -4,15 +4,17 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-import ru.rpovetkin.intershop.model.Item;
+import org.springframework.web.reactive.result.view.Rendering;
+import org.springframework.web.server.ServerWebExchange;
+import reactor.core.publisher.Mono;
+import ru.rpovetkin.intershop.model.Action;
 import ru.rpovetkin.intershop.model.ItemSort;
 import ru.rpovetkin.intershop.model.Paging;
 import ru.rpovetkin.intershop.service.ItemService;
-
-import java.util.List;
 
 @Controller
 @Slf4j
@@ -26,13 +28,16 @@ public class MainItemController {
     }
 
     @GetMapping
-    public String getItems(
+    public Mono<Rendering> getItems(
             @RequestParam(value = "search", defaultValue = "") String search,
             @RequestParam(value = "sort", defaultValue = "NO") String sort,
             @RequestParam(value = "pageNumber", defaultValue = "1") Integer pageNumber,
-            @RequestParam(value = "pageSize", defaultValue = "10") Integer pageSize, Model model) {
-        log.debug("getItems: search={}, pageNumber={}, pageSize={}, sort={}", search, pageNumber, pageSize, ItemSort.valueOf(sort));
+            @RequestParam(value = "pageSize", defaultValue = "10") Integer pageSize) {
 
+        log.debug("getItems: search={}, pageNumber={}, pageSize={}, sort={}",
+                search, pageNumber, pageSize, ItemSort.valueOf(sort));
+
+        // Создаем сортировку
         Sort sorting = Sort.unsorted();
         if ("ALPHA".equals(sort)) {
             sorting = Sort.by("title").ascending();
@@ -40,35 +45,45 @@ public class MainItemController {
             sorting = Sort.by("price").ascending();
         }
 
-        Pageable pageable = PageRequest.of(
-                pageNumber - 1,
-                pageSize,
-                sorting
-        );
+        Pageable pageable = PageRequest.of(pageNumber - 1, pageSize, sorting);
 
-        List<Item> items = itemService.findAllWithPagination(pageable, search);
-        model.addAttribute("items", items);
+        return itemService.findAllWithPagination(pageable, search)
+                .collectList()
+                .map(items -> {
+                    Paging paging = new Paging(
+                            pageNumber,
+                            pageSize,
+                            false,
+                            false
+                    );
 
-        Paging paging = new Paging(pageNumber, pageSize, false, false);
-        model.addAttribute("paging", paging);
-        model.addAttribute("search", search);
-        model.addAttribute("sort", sort);
-        return "main";
+                    return Rendering.view("main")
+                            .modelAttribute("items", items)
+                            .modelAttribute("paging", paging)
+                            .modelAttribute("search", search)
+                            .modelAttribute("sort", sort)
+                            .build();
+                });
     }
 
-    @PostMapping(value = "/{id}")
-    public String changeItem(
-            @PathVariable(name = "id") Long id,
-            @RequestParam(name = "action") String action) {
-        log.debug("changeItem: id={}, action={}", id, action);
-        itemService.changeCountItems(id, action);
-        return "redirect:/main/items";
+    @PostMapping("/{id}")
+    public Mono<Rendering> changeItem(@PathVariable Long id, ServerWebExchange exchange) {
+        return exchange.getFormData()
+                .flatMap(formData -> {
+                    String action = formData.getFirst("action");
+                    log.info("changeItem: id={}, action={}", id, action);
+
+                    return itemService.changeCountItemsReactive(id, action)
+                            .then(Mono.just(Rendering.redirectTo("/items/{id}")
+                                    .modelAttribute("id", id)
+                                    .build()));
+                });
     }
 
     @GetMapping("/{id}")
-    public String showItems(@PathVariable(name = "id") Long id, Model model) {
-        Item item = itemService.findById(id);
-        model.addAttribute("item", item);
-        return "item";
+    public Mono<String> showItems(@PathVariable(name = "id") Long id, Model model) {
+        return itemService.findById(id)
+                .doOnNext(item -> model.addAttribute("item", item))
+                .map(item -> "item");
     }
 }
