@@ -1,139 +1,220 @@
-//package ru.rpovetkin.intershop;
-//
-//import org.junit.jupiter.api.Test;
-//import org.mockito.ArgumentMatchers;
-//import org.springframework.beans.factory.annotation.Autowired;
-//import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-//import org.springframework.http.HttpStatus;
-//import org.springframework.test.context.ActiveProfiles;
-//import org.springframework.test.context.bean.override.mockito.MockitoBean;
-//import org.springframework.test.web.servlet.MockMvc;
-//import org.springframework.web.server.ResponseStatusException;
-//import ru.rpovetkin.intershop.model.Item;
-//import ru.rpovetkin.intershop.service.ItemService;
-//import ru.rpovetkin.intershop.web.MainItemController;
-//
-//import java.math.BigDecimal;
-//import java.util.Arrays;
-//import java.util.List;
-//
-//import static org.hamcrest.Matchers.*;
-//import static org.mockito.ArgumentMatchers.anyString;
-//import static org.mockito.Mockito.any;
-//import static org.mockito.Mockito.*;
-//import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-//import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-//import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-//
-//@WebMvcTest(MainItemController.class)
-//@ActiveProfiles("test")
-//class MainItemControllerTest {
-//
-//    @Autowired
-//    MockMvc mockMvc;
-//
-//    @MockitoBean
-//    ItemService itemService;
-//
-//    @Test
-//    void showItems_get_item_id_1() throws Exception {
-//        Item item = new Item();
-//        item.setId(1L);
-//        item.setTitle("тапки");
-//        item.setCount(0);
-//        item.setPrice(BigDecimal.TEN);
-//        item.setDescription("обычные тапки");
-//        item.setImgPath("slippers.jpg");
-//        doReturn(item).when(itemService).findById(1L);
-//
-//        mockMvc.perform(get("/main/items/1"))
-//                .andExpect(status().isOk())
-//                .andExpect(content().contentType("text/html;charset=UTF-8"));
-//    }
-//
-//    @Test
-//    void testFindByIdNotFound() throws Exception {
-//        when(itemService.findById(2L))
-//                .thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Item not found"));
-//        mockMvc.perform(get("/main/items/2"))
-//                .andExpect(status().isNotFound());
-//    }
-//
-//    @Test
-//    void showItems_getItemById_shouldReturnItemDetails() throws Exception {
-//        Item testItem = new Item(1L, "Кроссовки", "Спортивные кроссовки",
-//                "sneakers.jpg", 10, BigDecimal.valueOf(4999.99));
-//
-//        when(itemService.findById(1L)).thenReturn(testItem);
-//
-//        mockMvc.perform(get("/main/items/1"))
-//                .andExpect(status().isOk())
-//                .andExpect(content().contentType("text/html;charset=UTF-8"))
-//                .andExpect(model().attributeExists("item"))
-//                .andExpect(model().attribute("item", hasProperty("id", is(1L))))
-//                .andExpect(model().attribute("item", hasProperty("title", is("Кроссовки"))))
-//                .andExpect(model().attribute("item", hasProperty("description", is("Спортивные кроссовки"))))
-//                .andExpect(model().attribute("item", hasProperty("imgPath", is("sneakers.jpg"))))
-//                .andExpect(model().attribute("item", hasProperty("count", is(10))))
-//                .andExpect(model().attribute("item", hasProperty("price", is(BigDecimal.valueOf(4999.99)))));
-//    }
-//
-//    @Test
-//    void getItems_withSortingAndPagination_shouldReturnCorrectView() throws Exception {
-//        List<Item> items = Arrays.asList(
-//                new Item(1L, "Футболка", "Хлопковая футболка", "tshirt.jpg", 20, BigDecimal.valueOf(1999.99)),
-//                new Item(2L, "Джинсы", "Синие джинсы", "jeans.jpg", 15, BigDecimal.valueOf(3999.99))
-//        );
-//
-//        when(itemService.findAllWithPagination(ArgumentMatchers.any(), anyString())).thenReturn(items);
-//
-//        mockMvc.perform(get("/main/items")
-//                        .param("sort", "PRICE")
-//                        .param("pageNumber", "2")
-//                        .param("pageSize", "5"))
-//                .andExpect(status().isOk())
-//                .andExpect(model().attributeExists("items"))
-//                .andExpect(model().attribute("items", hasSize(2)))
-//                .andExpect(model().attribute("sort", "PRICE"))
-//                .andExpect(model().attribute("paging", hasProperty("pageSize", is(5))))
-//                .andExpect(view().name("main"));
-//    }
-//
-//    @Test
-//    void changeItem_withValidActions_shouldUpdateCount() throws Exception {
-//        Long itemId = 1L;
-//
-//        // Тестируем INCREMENT
-//        mockMvc.perform(post("/main/items/{id}", itemId)
-//                        .param("action", "INCREMENT"))
-//                .andExpect(status().is3xxRedirection())
-//                .andExpect(redirectedUrl("/main/items"));
-//
-//        verify(itemService).changeCountItems(itemId, "INCREMENT");
-//
-//        // Тестируем DECREMENT
-//        mockMvc.perform(post("/main/items/{id}", itemId)
-//                        .param("action", "DECREMENT"))
-//                .andExpect(status().is3xxRedirection())
-//                .andExpect(redirectedUrl("/main/items"));
-//
-//        verify(itemService).changeCountItems(itemId, "DECREMENT");
-//    }
-//
-//    @Test
-//    void getItems_withSearchTerm_shouldFilterResults() throws Exception {
-//        String searchTerm = "джинсы";
-//        List<Item> filteredItems = List.of(
-//                new Item(2L, "Джинсы", "Синие джинсы", "jeans.jpg", 15, BigDecimal.valueOf(3999.99))
-//        );
-//
-//        when(itemService.findAllWithPagination(any(), eq(searchTerm)))
-//                .thenReturn(filteredItems);
-//
-//        mockMvc.perform(get("/main/items")
-//                        .param("search", searchTerm))
-//                .andExpect(status().isOk())
-//                .andExpect(model().attribute("items", filteredItems))
-//                .andExpect(model().attribute("search", searchTerm));
-//    }
-//}
+package ru.rpovetkin.intershop;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.web.reactive.server.WebTestClient;
+import org.springframework.web.server.ResponseStatusException;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import ru.rpovetkin.intershop.model.Action;
+import ru.rpovetkin.intershop.model.Item;
+import ru.rpovetkin.intershop.service.ItemService;
+import ru.rpovetkin.intershop.web.MainItemController;
+
+import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.List;
+
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+@WebFluxTest(MainItemController.class)
+class MainItemControllerTest {
+
+    @Autowired
+    private WebTestClient webTestClient;
+
+    @MockitoBean
+    ItemService itemService;
+
+    @Test
+    void showItems_get_item_id_1() {
+        Item item = new Item();
+        item.setId(1L);
+        item.setTitle("тапки");
+        item.setCount(0);
+        item.setPrice(BigDecimal.TEN);
+        item.setDescription("обычные тапки");
+        item.setImgPath("slippers.jpg");
+
+        when(itemService.findById(1L)).thenReturn(Mono.just(item));
+
+        webTestClient.get().uri("/main/items/1")
+                .exchange()
+                .expectStatus().isOk()
+                .expectHeader().contentType(MediaType.TEXT_HTML)
+                .expectBody()
+                .consumeWith(response -> {
+                    String responseBody = new String(response.getResponseBody());
+                    assertThat(responseBody).contains("тапки");
+                    assertThat(responseBody).contains("обычные тапки");
+                    assertThat(responseBody).contains("slippers.jpg");
+                    assertThat(responseBody).contains("10");
+                });
+    }
+
+    @Test
+    void testFindByIdNotFound() {
+        when(itemService.findById(2L))
+                .thenReturn(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "Item not found")));
+
+        webTestClient.get().uri("/main/items/2")
+                .exchange()
+                .expectStatus().isNotFound();
+    }
+
+    @Test
+    void showItems_getItemById_shouldReturnItemDetails() {
+        Item testItem = new Item();
+        testItem.setId(1L);
+        testItem.setTitle("Кроссовки");
+        testItem.setDescription("Спортивные кроссовки");
+        testItem.setImgPath("sneakers.jpg");
+        testItem.setCount(10);
+        testItem.setPrice(BigDecimal.valueOf(4999.99));
+
+        when(itemService.findById(1L)).thenReturn(Mono.just(testItem));
+
+        webTestClient.get().uri("/main/items/1")
+                .exchange()
+                .expectStatus().isOk()
+                .expectHeader().contentType(MediaType.TEXT_HTML)
+                .expectBody()
+                .consumeWith(response -> {
+                    String responseBody = new String(response.getResponseBody(), StandardCharsets.UTF_8);
+
+                    // Проверяем наличие всех ожидаемых данных в HTML
+                    assertThat(responseBody).contains("Кроссовки");
+                    assertThat(responseBody).contains("Спортивные кроссовки");
+                    assertThat(responseBody).contains("sneakers.jpg");
+                    assertThat(responseBody).contains("10");
+                    assertThat(responseBody).contains("4999.99");
+                });
+    }
+
+    @Test
+    void getItems_withSortingAndPagination_shouldReturnCorrectView() {
+        List<Item> items = Arrays.asList(
+                new Item(1L, "Футболка", "Хлопковая футболка", "image/cap.jpg", 20, BigDecimal.valueOf(1999.99)),
+                new Item(2L, "Джинсы", "Синие джинсы", "image/slippers.jpg", 15, BigDecimal.valueOf(3999.99))
+        );
+
+        when(itemService.findAllWithPagination(any(Pageable.class), anyString()))
+                .thenReturn(Flux.fromIterable(items));
+
+        webTestClient.get().uri(uriBuilder -> uriBuilder.path("/main/items")
+                        .queryParam("sort", "PRICE")
+                        .queryParam("pageNumber", "1")
+                        .queryParam("pageSize", "5")
+                        .build())
+                .exchange()
+                .expectStatus().isOk()
+                .expectHeader().contentType(MediaType.TEXT_HTML)
+                .expectBody()
+                .consumeWith(response -> {
+                    String responseBody = new String(response.getResponseBody(), StandardCharsets.UTF_8);
+
+                    // Проверка содержимого
+                    assertThat(responseBody).contains("Футболка");
+                    assertThat(responseBody).contains("Джинсы");
+                    assertThat(responseBody).contains("1999.99");
+                    assertThat(responseBody).contains("3999.99");
+                });
+    }
+
+    @Test
+    void changeItem_withPlusAction_shouldIncrementCount() {
+        Long itemId = 1L;
+
+        when(itemService.changeCountItemsReactive(eq(itemId), eq("PLUS")))
+                .thenReturn(Mono.empty());
+
+        webTestClient.post()
+                .uri("/main/items/{id}", itemId)
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                .bodyValue("action=PLUS")
+                .exchange()
+                .expectStatus().is3xxRedirection()
+                .expectHeader().valueEquals("Location", "/main/items");
+
+        verify(itemService).changeCountItemsReactive(itemId, "PLUS");
+    }
+
+    @Test
+    void changeItem_withMinusAction_shouldDecrementCount() {
+        Long itemId = 1L;
+
+        when(itemService.changeCountItemsReactive(eq(itemId), eq("MINUS")))
+                .thenReturn(Mono.empty());
+
+        webTestClient.post()
+                .uri("/main/items/{id}", itemId)
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                .bodyValue("action=MINUS")
+                .exchange()
+                .expectStatus().is3xxRedirection()
+                .expectHeader().valueEquals("Location", "/main/items");
+
+        verify(itemService).changeCountItemsReactive(itemId, "MINUS");
+    }
+
+    @Test
+    void changeItem_withDeleteAction_shouldRemoveItem() {
+        Long itemId = 1L;
+
+        when(itemService.changeCountItemsReactive(eq(itemId), eq("DELETE")))
+                .thenReturn(Mono.empty());
+
+        webTestClient.post()
+                .uri("/main/items/{id}", itemId)
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                .bodyValue("action=DELETE")
+                .exchange()
+                .expectStatus().is3xxRedirection()
+                .expectHeader().valueEquals("Location", "/main/items");
+
+        verify(itemService).changeCountItemsReactive(itemId, "DELETE");
+    }
+
+    @Test
+    void getItems_withSearchTerm_shouldFilterResults() {
+        // Arrange
+        String searchTerm = "джинсы";
+        Item filteredItem = new Item(2L, "Джинсы", "Синие джинсы", "jeans.jpg", 15, BigDecimal.valueOf(3999.99));
+        List<Item> filteredItems = List.of(filteredItem);
+
+        when(itemService.findAllWithPagination(any(Pageable.class), eq(searchTerm)))
+                .thenReturn(Flux.fromIterable(filteredItems));
+
+        // Act & Assert
+        webTestClient.get()
+                .uri(uriBuilder -> uriBuilder.path("/main/items")
+                        .queryParam("search", searchTerm)
+                        .build())
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody()
+                .consumeWith(response -> {
+                    String responseBody = new String(response.getResponseBody(), StandardCharsets.UTF_8);
+
+                    // Проверяем что найденный товар присутствует в HTML
+                    assertThat(responseBody).contains("Джинсы");
+                    assertThat(responseBody).contains("Синие джинсы");
+                    assertThat(responseBody).contains("3999.99");
+
+                    // Проверяем что search term сохранился в форме
+                    assertThat(responseBody).containsPattern("value=\"" + searchTerm + "\"");
+                });
+
+        // Проверяем вызов сервиса с правильными параметрами
+        verify(itemService).findAllWithPagination(any(Pageable.class), eq(searchTerm));
+    }
+}
