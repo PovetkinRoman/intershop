@@ -30,14 +30,13 @@ public class MainItemController {
     @GetMapping
     public Mono<Rendering> getItems(
             @RequestParam(value = "search", defaultValue = "") String search,
-            @RequestParam(value = "sort", defaultValue = "NO") String sort,
+            @RequestParam(value = "sort", defaultValue = "ALPHA") String sort,
             @RequestParam(value = "pageNumber", defaultValue = "1") Integer pageNumber,
             @RequestParam(value = "pageSize", defaultValue = "10") Integer pageSize) {
 
         log.debug("getItems: search={}, pageNumber={}, pageSize={}, sort={}",
                 search, pageNumber, pageSize, ItemSort.valueOf(sort));
 
-        // Создаем сортировку
         Sort sorting = Sort.unsorted();
         if ("ALPHA".equals(sort)) {
             sorting = Sort.by("title").ascending();
@@ -71,11 +70,10 @@ public class MainItemController {
         return exchange.getFormData()
                 .flatMap(formData -> {
                     String action = formData.getFirst("action");
-                    log.info("changeItem: id={}, action={}", id, action);
+                    log.debug("changeItem: id={}, action={}", id, action);
 
                     return itemService.changeCountItemsReactive(id, action)
-                            .then(Mono.just(Rendering.redirectTo("/items/{id}")
-                                    .modelAttribute("id", id)
+                            .then(Mono.just(Rendering.redirectTo("/main/items")
                                     .build()));
                 });
     }

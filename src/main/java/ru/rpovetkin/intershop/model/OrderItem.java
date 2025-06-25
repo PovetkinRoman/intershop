@@ -1,42 +1,29 @@
-//package ru.rpovetkin.intershop.model;
-//
-//import jakarta.persistence.*;
-//import lombok.AllArgsConstructor;
-//import lombok.Data;
-//import lombok.NoArgsConstructor;
-//
-//import java.math.BigDecimal;
-//
-//@Entity
-//@Data
-//@NoArgsConstructor
-//@AllArgsConstructor
-//@Table(name = "order_item")
-//public class OrderItem {
-//    @EmbeddedId
-//    private OrderItemId id;
-//
-//    @ManyToOne(fetch = FetchType.LAZY)
-//    @MapsId("orderId")
-//    @JoinColumn(name = "order_id")
-//    private Order order;
-//
-//    @ManyToOne(fetch = FetchType.LAZY)
-//    @MapsId("itemId")
-//    @JoinColumn(name = "item_id")
-//    private Item item;
-//
-//    @Column(nullable = false)
-//    private BigDecimal quantity;
-//
-//    @Column(nullable = false)
-//    private Integer count;
-//
-//    public OrderItem(Order order, Item item, BigDecimal quantity, Integer count) {
-//        this.order = order;
-//        this.item = item;
-//        this.quantity = quantity;
-//        this.id = new OrderItemId(order.getId(), item.getId());
-//        this.count = count;
-//    }
-//}
+package ru.rpovetkin.intershop.model;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Table;
+
+import java.math.BigDecimal;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Table("order_item")
+public class OrderItem {
+    @Id
+    private Long id;
+    private Long orderId;
+    private Long itemId;
+    private BigDecimal price;
+    private Integer count;
+
+    public OrderItem(Long orderId, Long itemId, BigDecimal price, Integer count) {
+        this.orderId = orderId;
+        this.itemId = itemId;
+        this.price = price;
+        this.count = count;
+    }
+}

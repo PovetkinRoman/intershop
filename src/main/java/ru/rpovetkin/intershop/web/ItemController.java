@@ -27,7 +27,7 @@ public class ItemController {
         return exchange.getFormData()
                 .flatMap(formData -> {
                     String action = formData.getFirst("action");
-                    log.info("changeItem: id={}, action={}", id, action);
+                    log.debug("changeItem: id={}, action={}", id, action);
 
                     return itemService.changeCountItemsReactive(id, action)
                             .then(Mono.just(Rendering.redirectTo("/items/{id}")

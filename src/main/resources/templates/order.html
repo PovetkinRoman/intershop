@@ -26,25 +26,25 @@
 <!--        <div th:text="${order}"></div>-->
 <!--        <div th:text="${items}"></div>-->
     </tr>
-    <tr th:each="item : ${items}">
+    <tr th:each="itemDto : ${items}">
         <td>
             <table>
                 <tr>
                     <td>
-                        <a th:href="${'/items/'+item.getItem().getId()}">
-                            <img width="300" height="300" th:src="${'http://localhost:8080/'+item.getItem().getImgPath()}">
+                        <a th:href="${'/items/'+itemDto.item.getId()}">
+                            <img width="300" height="300" th:src="${'http://localhost:8080/'+itemDto.item.getImgPath()}">
                         </a>
                     </td>
                 </tr>
                 <tr>
                     <td>
-                        <b th:text="${item.getItem().getTitle()}"></b>
+                        <b th:text="${itemDto.item.getTitle()}"></b>
                     </td>
                     <td>
-                        <b th:text="${item.getCount()}+' шт.'"></b>
+                        <b th:text="${itemDto.count}+' шт.'"></b>
                     </td>
                     <td>
-                        <b th:text="${item.getQuantity()*item.getCount()}+' руб.'"></b>
+                        <b th:text="${itemDto.getTotalPrice()}+' руб.'"></b>
                     </td>
                 </tr>
             </table>
