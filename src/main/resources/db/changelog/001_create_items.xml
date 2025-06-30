@@ -1,28 +1,28 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<databaseChangeLog
-        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
-        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+<!--<?xml version="1.0" encoding="UTF-8"?>-->
+<!--<databaseChangeLog-->
+<!--        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"-->
+<!--        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"-->
+<!--        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-->
+<!--        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">-->
 
-    <changeSet id="1" author="rpovetkin">
-        <preConditions onFail="MARK_RAN">
-            <not>
-                <tableExists tableName="item"/>
-            </not>
-        </preConditions>
-        <createTable tableName="item">
-            <column name="id" type="BIGINT" autoIncrement="true">
-                <constraints nullable="false" primaryKey="true"/>
-            </column>
-            <column name="title" type="varchar(32)"/>
-            <column name="description" type="varchar(64)"/>
-            <column name="img_path" type="varchar(64)"/>
-            <column name="count" type="int"/>
-            <column name="price" type="decimal(19,2)"/>
-        </createTable>
-        <rollback>
-            <dropTable tableName="item"/>
-        </rollback>
-    </changeSet>
-</databaseChangeLog>
+<!--    <changeSet id="1" author="rpovetkin">-->
+<!--        <preConditions onFail="MARK_RAN">-->
+<!--            <not>-->
+<!--                <tableExists tableName="item"/>-->
+<!--            </not>-->
+<!--        </preConditions>-->
+<!--        <createTable tableName="item">-->
+<!--            <column name="id" type="BIGINT" autoIncrement="true">-->
+<!--                <constraints nullable="false" primaryKey="true"/>-->
+<!--            </column>-->
+<!--            <column name="title" type="varchar(32)"/>-->
+<!--            <column name="description" type="varchar(64)"/>-->
+<!--            <column name="img_path" type="varchar(64)"/>-->
+<!--            <column name="count" type="int"/>-->
+<!--            <column name="price" type="decimal(19,2)"/>-->
+<!--        </createTable>-->
+<!--        <rollback>-->
+<!--            <dropTable tableName="item"/>-->
+<!--        </rollback>-->
+<!--    </changeSet>-->
+<!--</databaseChangeLog>-->

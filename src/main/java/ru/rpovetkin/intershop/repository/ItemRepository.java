@@ -1,21 +1,21 @@
 package ru.rpovetkin.intershop.repository;
 
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.r2dbc.repository.Query;
+import org.springframework.data.r2dbc.repository.R2dbcRepository;
+import org.springframework.stereotype.Repository;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import ru.rpovetkin.intershop.model.Item;
 
-import java.util.List;
+@Repository
+public interface ItemRepository extends R2dbcRepository<Item, Long> {
 
-public interface ItemRepository extends JpaRepository<Item, Long> {
+    @Query("SELECT * FROM item WHERE count > 0")
+    Flux<Item> findItemsForCart();
 
-    @Query(value = "select * from item i " +
-            "where i.count > 0", nativeQuery = true)
-    List<Item> findItemsForCart();
+    @Query("UPDATE item SET count = 0 WHERE count > 0")
+    Mono<Integer> setItemCountZeroForAllInCart();
 
-    @Transactional
-    @Modifying
-    @Query(value = "update item i set count = 0 where i.count > 0", nativeQuery = true)
-    int setItemCountNullAllInCart();
+    Flux<Item> findAllBy(Pageable pageable);
 }

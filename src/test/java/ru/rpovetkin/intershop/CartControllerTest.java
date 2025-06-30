@@ -2,34 +2,32 @@ package ru.rpovetkin.intershop;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.test.context.ActiveProfiles;
+import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
+import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.reactive.server.WebTestClient;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import ru.rpovetkin.intershop.model.Item;
-import ru.rpovetkin.intershop.model.Order;
 import ru.rpovetkin.intershop.service.ItemService;
 import ru.rpovetkin.intershop.service.OrderService;
 import ru.rpovetkin.intershop.web.CartController;
 
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
-import static org.hamcrest.Matchers.hasSize;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(CartController.class)
-@ActiveProfiles("test")
+@WebFluxTest(CartController.class)
 class CartControllerTest {
 
     @Autowired
-    MockMvc mockMvc;
+    private WebTestClient webTestClient;
 
     @MockitoBean
     ItemService itemService;
@@ -39,77 +37,135 @@ class CartControllerTest {
 
 
     @Test
-    void cartItems_shouldShowEmptyCart() throws Exception {
-        when(itemService.findAllInCart()).thenReturn(Collections.emptyList());
+    void cartItems_shouldShowEmptyCart() {
+        when(itemService.findAllInCartSorted())
+                .thenReturn(Flux.empty());
 
-        mockMvc.perform(get("/cart/items"))
-                .andExpect(status().isOk())
-                .andExpect(model().attribute("items", hasSize(0)))
-                .andExpect(model().attribute("total", BigDecimal.ZERO))
-                .andExpect(model().attribute("empty", true))
-                .andExpect(view().name("cart"));
+        webTestClient.get()
+                .uri("/cart/items")
+                .exchange()
+                .expectStatus().isOk()
+                .expectHeader().contentType(MediaType.TEXT_HTML)
+                .expectBody()
+                .consumeWith(response -> {
+                    String responseBody = new String(response.getResponseBody(), StandardCharsets.UTF_8);
+
+                    // Проверяем основные элементы пустой корзины
+                    assertThat(responseBody).contains("Корзина товаров"); // Проверяем заголовок страницы
+                    assertThat(responseBody).contains("Итого: 0 руб."); // Проверяем общую сумму
+                    assertThat(responseBody).doesNotContain("cart-item"); // Убеждаемся, что нет товаров
+
+                    // Проверяем наличие навигационных ссылок
+                    assertThat(responseBody).contains("ГЛАВНАЯ");
+                    assertThat(responseBody).contains("ЗАКАЗЫ");
+                });
+
+        verify(itemService).findAllInCartSorted();
     }
-
     @Test
-    void cartItems_shouldShowItemsWithTotal() throws Exception {
+    void cartItems_shouldShowItemsWithTotal() {
         List<Item> items = Arrays.asList(
                 new Item(1L, "Футболка", "", "short.jpg", 2, BigDecimal.valueOf(1500)),
                 new Item(2L, "Джинсы", "", "short.jpg", 1, BigDecimal.valueOf(3000))
         );
-        BigDecimal expectedTotal = BigDecimal.valueOf(6000);
 
-        when(itemService.findAllInCart()).thenReturn(items);
+        when(itemService.findAllInCartSorted())
+                .thenReturn(Flux.fromIterable(items));
 
-        mockMvc.perform(get("/cart/items"))
-                .andExpect(status().isOk())
-                .andExpect(model().attribute("items", hasSize(2)))
-                .andExpect(model().attribute("total", expectedTotal))
-                .andExpect(model().attribute("empty", false))
-                .andExpect(view().name("cart"));
+        webTestClient.get()
+                .uri("/cart/items")
+                .exchange()
+                .expectStatus().isOk()
+                .expectHeader().contentType(MediaType.TEXT_HTML)
+                .expectBody()
+                .consumeWith(response -> {
+                    String responseBody = new String(response.getResponseBody(), StandardCharsets.UTF_8);
+
+                    // Проверяем товары в корзине (точные совпадения)
+                    assertThat(responseBody).contains(">Футболка</b>");
+                    assertThat(responseBody).contains(">1500 руб.</b>");
+                    assertThat(responseBody).contains(">Джинсы</b>");
+                    assertThat(responseBody).contains(">3000 руб.</b>");
+
+                    // Проверяем количество товаров
+                    assertThat(responseBody).contains("<span>2</span>");
+                    assertThat(responseBody).contains("<span>1</span>");
+
+                    // Проверяем общую сумму
+                    assertThat(responseBody).contains(">Итого: 6000 руб.</b>");
+
+                });
+
+        // Проверяем вызов сервиса
+        verify(itemService).findAllInCartSorted();
     }
 
     @Test
-    void cartChangeItem_shouldHandleIncrement() throws Exception {
+    void cartChangeItem_shouldProcessIncrementAction() {
         Long itemId = 1L;
-        String action = "INCREMENT";
+        String action = "PLUS";
 
-        mockMvc.perform(post("/cart/items/{id}", itemId)
-                        .param("action", action))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/cart/items"));
+        when(itemService.changeCountItemsReactive(eq(itemId), eq(action)))
+                .thenReturn(Mono.empty());
 
-        verify(itemService).changeCountItems(itemId, action);
+        webTestClient.post()
+                .uri("/cart/items/{id}", itemId)
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                .bodyValue("action=" + action)
+                .exchange()
+                .expectStatus().is3xxRedirection()
+                .expectHeader().valueEquals("Location", "/cart/items");
+
+        verify(itemService).changeCountItemsReactive(itemId, action);
     }
 
     @Test
-    void cartChangeItem_shouldHandleDecrement() throws Exception {
-        Long itemId = 1L;
-        String action = "DECREMENT";
+    void cartChangeItem_shouldProcessDecrementAction() {
+        Long itemId = 2L;
+        String action = "MINUS";
 
-        mockMvc.perform(post("/cart/items/{id}", itemId)
-                        .param("action", action))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/cart/items"));
+        when(itemService.changeCountItemsReactive(eq(itemId), eq(action)))
+                .thenReturn(Mono.empty());
 
-        verify(itemService).changeCountItems(itemId, action);
+        webTestClient.post()
+                .uri("/cart/items/{id}", itemId)
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                .bodyValue("action=" + action)
+                .exchange()
+                .expectStatus().is3xxRedirection()
+                .expectHeader().valueEquals("Location", "/cart/items");
     }
 
     @Test
-    void cartBuyItems_shouldCreateOrderAndClearCart() throws Exception {
-        List<Item> cartItems = List.of(
-                new Item(1L, "Футболка", "", "short.jpg", 2, BigDecimal.valueOf(1500)));
+    void cartChangeItem_shouldProcessDeleteAction() {
+        Long itemId = 3L;
+        String action = "DELETE";
 
-        Order createdOrder = new Order();
-        createdOrder.setId(100L);
+        when(itemService.changeCountItemsReactive(eq(itemId), eq(action)))
+                .thenReturn(Mono.empty());
 
-        when(itemService.findAllInCart()).thenReturn(cartItems);
-        when(orderService.createOrder(cartItems)).thenReturn(createdOrder);
+        webTestClient.post()
+                .uri("/cart/items/{id}", itemId)
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                .bodyValue("action=" + action)
+                .exchange()
+                .expectStatus().is3xxRedirection()
+                .expectHeader().valueEquals("Location", "/cart/items");
+    }
 
-        mockMvc.perform(post("/cart/items/buy"))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/orders/100?newOrder=true"));
+    @Test
+    void cartChangeItem_shouldReturnServerErrorWhenServiceFails() {
+        Long itemId = 5L;
+        String action = "PLUS";
 
-        verify(itemService).setItemCountNullAllInCart();
-        verify(orderService).createOrder(cartItems);
+        when(itemService.changeCountItemsReactive(eq(itemId), eq(action)))
+                .thenReturn(Mono.error(new RuntimeException("Service error")));
+
+        webTestClient.post()
+                .uri("/cart/items/{id}", itemId)
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                .bodyValue("action=" + action)
+                .exchange()
+                .expectStatus().is5xxServerError();
     }
 }

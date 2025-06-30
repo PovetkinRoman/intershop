@@ -4,10 +4,15 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.reactive.result.view.Rendering;
+import org.springframework.web.server.ServerWebExchange;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import ru.rpovetkin.intershop.model.Item;
-import ru.rpovetkin.intershop.model.Order;
 import ru.rpovetkin.intershop.service.ItemService;
 import ru.rpovetkin.intershop.service.OrderService;
 
@@ -24,35 +29,77 @@ public class CartController {
     private final OrderService orderService;
 
     @GetMapping
-    public String cartItems(Model model) {
-        List<Item> items = itemService.findAllInCart();
-        model.addAttribute("items", items);
-        BigDecimal totalPrice = items.stream()
-                .map(item -> item.getPrice().multiply(BigDecimal.valueOf(item.getCount())))
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-        model.addAttribute("total", totalPrice);
-        model.addAttribute("empty", items.isEmpty() ? Boolean.TRUE : Boolean.FALSE);
-        return "cart";
+    public Mono<String> cartItems(Model model) {
+        return itemService.findAllInCartSorted()
+                .collectList()
+                .flatMap(items -> {
+                    model.addAttribute("items", items);
+
+                    BigDecimal totalPrice = items.stream()
+                            .map(item -> item.getPrice().multiply(BigDecimal.valueOf(item.getCount())))
+                            .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+                    model.addAttribute("total", totalPrice);
+                    model.addAttribute("empty", items.isEmpty());
+
+                    return Mono.just("cart");
+                });
     }
 
     @PostMapping("/{id}")
-    public String cartChangeItem(@PathVariable(name = "id") Long id,
-                                 @RequestParam String action) {
-        log.debug("cartChangeItem: id={}, action={}", id, action);
-        itemService.changeCountItems(id, action);
-        return "redirect:/cart/items";
+    public Mono<Rendering> cartChangeItem(@PathVariable(name = "id") Long id,
+                                          ServerWebExchange exchange) {
+        return exchange.getFormData()
+                .flatMap(formData -> {
+                    String action = formData.getFirst("action");
+                    log.debug("cartChangeItem: id={}, action={}", id, action);
+
+                    return itemService.changeCountItemsReactive(id, action)
+                            .then(Mono.just(Rendering.redirectTo("/cart/items")
+                                    .build()));
+                });
     }
 
+//    @PostMapping("/{id}")
+//    public Mono<Rendering> changeItem(@PathVariable Long id, ServerWebExchange exchange) {
+//        return exchange.getFormData()
+//                .flatMap(formData -> {
+//                    String action = formData.getFirst("action");
+//                    log.debug("changeItem: id={}, action={}", id, action);
+//
+//                    return itemService.changeCountItemsReactive(id, action)
+//                            .then(Mono.just(Rendering.redirectTo("/items/{id}")
+//                                    .modelAttribute("id", id)
+//                                    .build()));
+//                });
+//    }
+
+//    @PostMapping("/buy")
+//    public String cartBuyItems(RedirectAttributes redirectAttributes) {
+//        log.debug("cartBuyItems: ");
+//        Flux<Item> items = itemService.findAllInCartSorted();
+//        Mono<Order> order = orderService.createOrder(items);
+//        log.debug("cartBuyItems: order={}", order);
+//        if (order != null) {
+//            itemService.setItemCountZeroAllInCart();
+//        }
+//        redirectAttributes.addAttribute("id", order.getId());
+//        return "redirect:/orders/{id}?newOrder=true";
+//    }
+
     @PostMapping("/buy")
-    public String cartBuyItems(RedirectAttributes redirectAttributes) {
-        log.debug("cartBuyItems: ");
-        List<Item> items = itemService.findAllInCart();
-        Order order = orderService.createOrder(items);
-        log.debug("cartBuyItems: order={}", order);
-        if (order != null) {
-            itemService.setItemCountNullAllInCart();
-        }
-        redirectAttributes.addAttribute("id", order.getId());
-        return "redirect:/orders/{id}?newOrder=true";
+    public Mono<String> cartBuyItems() {
+        return itemService.findAllInCartSorted()
+                .collectList()
+                .flatMap(items -> {
+                    if (items.isEmpty()) {
+                        return Mono.error(new IllegalArgumentException("Cart is empty"));
+                    }
+                    return orderService.createOrder(Flux.fromIterable(items));
+                })
+                .flatMap(order -> itemService.setItemCountZeroAllInCart()
+                        .thenReturn("redirect:/orders/" + order.getId() + "?newOrder=true"))
+                .onErrorResume(e -> Mono.just("redirect:/cart?error=" + e.getMessage()));
     }
+
 }
