@@ -2,6 +2,8 @@ package ru.rpovetkin.intershop.web;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -59,33 +61,6 @@ public class CartController {
                                     .build()));
                 });
     }
-
-//    @PostMapping("/{id}")
-//    public Mono<Rendering> changeItem(@PathVariable Long id, ServerWebExchange exchange) {
-//        return exchange.getFormData()
-//                .flatMap(formData -> {
-//                    String action = formData.getFirst("action");
-//                    log.debug("changeItem: id={}, action={}", id, action);
-//
-//                    return itemService.changeCountItemsReactive(id, action)
-//                            .then(Mono.just(Rendering.redirectTo("/items/{id}")
-//                                    .modelAttribute("id", id)
-//                                    .build()));
-//                });
-//    }
-
-//    @PostMapping("/buy")
-//    public String cartBuyItems(RedirectAttributes redirectAttributes) {
-//        log.debug("cartBuyItems: ");
-//        Flux<Item> items = itemService.findAllInCartSorted();
-//        Mono<Order> order = orderService.createOrder(items);
-//        log.debug("cartBuyItems: order={}", order);
-//        if (order != null) {
-//            itemService.setItemCountZeroAllInCart();
-//        }
-//        redirectAttributes.addAttribute("id", order.getId());
-//        return "redirect:/orders/{id}?newOrder=true";
-//    }
 
     @PostMapping("/buy")
     public Mono<String> cartBuyItems() {

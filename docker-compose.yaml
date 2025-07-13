@@ -13,17 +13,39 @@ services:
       - POSTGRES_USER=root
       - POSTGRES_PASSWORD=root
 
-  web:
-    build: .
+  #  web:
+  #    build: .
+  #    ports:
+  #      - "8080:8080"
+  #    # "зависит от",
+  #    depends_on:
+  #      - db
+  #    # переменные окружения
+  #    environment:
+  #      - DB_NAME=intershop
+  #      - POSTGRES_USER=root
+  #      - POSTGRES_PASSWORD=root
+  #      - DB_HOST=db
+  #      - DB_PORT=5432
+
+  online-store-app:
+    build:
+      context: .
+      dockerfile: online-store/Dockerfile
     ports:
       - "8080:8080"
-    # "зависит от",
     depends_on:
       - db
-    # переменные окружения
     environment:
-      - DB_NAME=intershop
-      - POSTGRES_USER=root
-      - POSTGRES_PASSWORD=root
       - DB_HOST=db
       - DB_PORT=5432
+      - DB_NAME=intershop
+      - DB_USER=root
+      - DB_PASSWORD=root
+
+  payment-service-app:
+    build:
+      context: .
+      dockerfile: payment-service/Dockerfile
+    ports:
+      - "8081:8080"

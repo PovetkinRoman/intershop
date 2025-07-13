@@ -1,31 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
-
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>ru.rpovetkin</groupId>
-	<artifactId>intershop</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
-	<packaging>pom</packaging>
-
-	<name>intershop</name>
-	<description>project for my multi-module Spring application</description>
-
-	<modules>
-		<module>online-store</module>
-		<module>payment-service</module>
-	</modules>
-
 	<parent>
-		<groupId>org.springframework.boot</groupId>
-		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>3.5.0</version>
-		<relativePath/>
+		<groupId>ru.rpovetkin</groupId>
+		<artifactId>intershop</artifactId>
+		<version>0.0.1-SNAPSHOT</version>
 	</parent>
+
+	<artifactId>online-store</artifactId>
+	<packaging>jar</packaging>
+
+	<name>online-store</name>
+	<description>Project for Spring Boot</description>
 
 	<properties>
 		<java.version>21</java.version>
+		<start-class>ru.rpovetkin.intershop.IntershopApplication</start-class>
 	</properties>
+
 
 	<dependencies>
 		<dependency>
@@ -33,19 +26,18 @@
 			<artifactId>spring-boot-starter-webflux</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>org.projectlombok</groupId>
-			<artifactId>lombok</artifactId>
-			<scope>provided</scope>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-thymeleaf</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-test</artifactId>
-			<scope>test</scope>
+			<artifactId>spring-boot-starter-data-r2dbc</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-configuration-processor</artifactId>
-			<version>3.5.0</version>
+			<groupId>org.postgresql</groupId>
+			<artifactId>r2dbc-postgresql</artifactId>
+			<version>1.0.7.RELEASE</version>
+			<scope>runtime</scope>
 		</dependency>
 	</dependencies>
 
