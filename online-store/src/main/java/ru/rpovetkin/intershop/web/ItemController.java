@@ -1,5 +1,6 @@
 package ru.rpovetkin.intershop.web;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,13 +15,10 @@ import ru.rpovetkin.intershop.service.ItemService;
 @Controller
 @Slf4j
 @RequestMapping("/items")
+@RequiredArgsConstructor
 public class ItemController {
 
     private final ItemService itemService;
-
-    public ItemController(ItemService itemService) {
-        this.itemService = itemService;
-    }
 
     @PostMapping("/{id}")
     public Mono<Rendering> changeItem(@PathVariable Long id, ServerWebExchange exchange) {
@@ -35,7 +33,6 @@ public class ItemController {
                                     .build()));
                 });
     }
-
 
     @GetMapping("/{id}")
     public Mono<Rendering> showItem(@PathVariable Long id) {

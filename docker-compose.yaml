@@ -13,6 +13,15 @@ services:
       - POSTGRES_USER=root
       - POSTGRES_PASSWORD=root
 
+  # Redis сервис для кеширования
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+
   #  web:
   #    build: .
   #    ports:
@@ -36,12 +45,15 @@ services:
       - "8080:8080"
     depends_on:
       - db
+      - redis
     environment:
       - DB_HOST=db
       - DB_PORT=5432
       - DB_NAME=intershop
       - DB_USER=root
       - DB_PASSWORD=root
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
 
   payment-service-app:
     build:
@@ -49,3 +61,6 @@ services:
       dockerfile: payment-service/Dockerfile
     ports:
       - "8081:8080"
+
+volumes:
+  redis_data:

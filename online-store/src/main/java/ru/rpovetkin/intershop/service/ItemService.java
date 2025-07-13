@@ -1,5 +1,6 @@
 package ru.rpovetkin.intershop.service;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -7,18 +8,19 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import ru.rpovetkin.intershop.model.Action;
 import ru.rpovetkin.intershop.model.Item;
+import ru.rpovetkin.intershop.model.ItemCardDto;
+import ru.rpovetkin.intershop.model.ItemListDto;
 import ru.rpovetkin.intershop.repository.ItemRepository;
 
 import java.util.Comparator;
+import java.util.List;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class ItemService {
     private final ItemRepository itemRepository;
-
-    public ItemService(ItemRepository itemRepository) {
-        this.itemRepository = itemRepository;
-    }
+    private final CacheService cacheService;
 
     public Mono<Void> changeCountItemsReactive(Long id, String action) {
         Action actionEnum;
@@ -44,6 +46,10 @@ public class ItemService {
                     }
                     return itemRepository.save(item);
                 })
+                .doOnSuccess(item -> {
+                    // Очищаем кеш после изменения товара
+                    cacheService.evictAllItemCaches(id);
+                })
                 .then();
     }
 
@@ -66,11 +72,49 @@ public class ItemService {
     }
 
     public Mono<Void> setItemCountZeroAllInCart() {
-        return itemRepository.setItemCountZeroForAllInCart().then();
+        return itemRepository.setItemCountZeroForAllInCart()
+                .doOnSuccess(v -> {
+                    // Очищаем кеш всех товаров после очистки корзины
+                    cacheService.evictAllItemsList();
+                })
+                .then();
     }
 
     public Mono<Item> findById(Long id) {
         return itemRepository.findById(id)
                 .switchIfEmpty(Mono.error(new RuntimeException("Item not found with id: " + id)));
+    }
+
+    /**
+     * Получает кешированную карточку товара
+     */
+    public Mono<ItemCardDto> getCachedItemCard(Long id) {
+        return findById(id)
+                .map(cacheService::cacheItemCard);
+    }
+
+    /**
+     * Получает кешированные данные для списка товаров
+     */
+    public Mono<ItemListDto> getCachedItemList(Long id) {
+        return findById(id)
+                .map(cacheService::cacheItemList);
+    }
+
+    /**
+     * Получает кешированный список всех товаров для отображения в списке
+     */
+    public Mono<List<ItemListDto>> getCachedAllItemsList() {
+        return itemRepository.findAll()
+                .collectList()
+                .map(cacheService::cacheAllItemsList);
+    }
+
+    /**
+     * Получает кешированные данные для списка товаров с пагинацией и поиском
+     */
+    public Flux<ItemListDto> getCachedItemsWithPagination(Pageable pageable, String search) {
+        return findAllWithPagination(pageable, search)
+                .map(cacheService::cacheItemList);
     }
 }

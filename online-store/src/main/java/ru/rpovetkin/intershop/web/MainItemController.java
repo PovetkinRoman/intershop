@@ -1,5 +1,6 @@
 package ru.rpovetkin.intershop.web;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -17,13 +18,10 @@ import ru.rpovetkin.intershop.service.ItemService;
 @Controller
 @Slf4j
 @RequestMapping("/main/items")
+@RequiredArgsConstructor
 public class MainItemController {
 
     private final ItemService itemService;
-
-    public MainItemController(ItemService itemService) {
-        this.itemService = itemService;
-    }
 
     @GetMapping
     public Mono<Rendering> getItems(
