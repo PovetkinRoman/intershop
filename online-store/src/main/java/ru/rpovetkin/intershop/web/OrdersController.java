@@ -19,8 +19,8 @@ import java.util.Map;
 
 @Controller
 @RequestMapping("/orders")
-@Slf4j
 @RequiredArgsConstructor
+@Slf4j
 public class OrdersController {
 
     private final OrderService orderService;

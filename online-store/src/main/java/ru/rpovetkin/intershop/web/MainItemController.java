@@ -16,9 +16,9 @@ import ru.rpovetkin.intershop.model.Paging;
 import ru.rpovetkin.intershop.service.ItemService;
 
 @Controller
-@Slf4j
 @RequestMapping("/main/items")
 @RequiredArgsConstructor
+@Slf4j
 public class MainItemController {
 
     private final ItemService itemService;

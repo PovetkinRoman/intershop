@@ -15,14 +15,13 @@ import reactor.core.publisher.Mono;
 import ru.rpovetkin.intershop.service.ItemService;
 import ru.rpovetkin.intershop.service.OrderService;
 import org.springframework.web.reactive.function.client.WebClient;
-
 import java.math.BigDecimal;
 import java.time.Duration;
 
 @Controller
 @RequestMapping("/cart/items")
-@Slf4j
 @RequiredArgsConstructor
+@Slf4j
 public class CartController {
 
     private final ItemService itemService;
@@ -67,17 +66,13 @@ public class CartController {
     }
 
     @PostMapping("/{id}")
-    public Mono<Rendering> cartChangeItem(@PathVariable(name = "id") Long id,
-                                          ServerWebExchange exchange) {
+    public Mono<String> cartChangeItem(@PathVariable(name = "id") Long id, ServerWebExchange exchange) {
         return exchange.getFormData()
-                .flatMap(formData -> {
-                    String action = formData.getFirst("action");
-                    log.debug("cartChangeItem: id={}, action={}", id, action);
-
-                    return itemService.changeCountItemsReactive(id, action)
-                            .then(Mono.just(Rendering.redirectTo("/cart/items")
-                                    .build()));
-                });
+            .flatMap(formData -> {
+                String action = formData.getFirst("action");
+                return itemService.changeCountItemsReactive(id, action)
+                    .thenReturn("redirect:/cart/items");
+            });
     }
 
     @PostMapping("/buy")

@@ -219,3 +219,61 @@ docker volume prune -f
 # Перезапуск
 docker compose up -d
 ```
+
+# Генерация OpenAPI клиента и серверного кода
+
+## Как работает интеграция
+
+- В проекте используется OpenAPI схема (`openapi.yaml`) для описания взаимодействия между основным приложением (online-store) и сервисом платежей (payment-service).
+- Генерация клиента и серверных интерфейсов происходит автоматически при сборке через Maven.
+
+## Генерация клиента (online-store)
+
+- Используется плагин `openapi-generator-maven-plugin` с параметрами:
+  - `generatorName=java`
+  - `library=webclient`
+  - API и модели генерируются в пакеты `ru.rpovetkin.intershop.payment.api` и `ru.rpovetkin.intershop.payment.model`.
+- Необходимые зависимости для компиляции сгенерированного кода:
+  - `org.openapitools:jackson-databind-nullable:0.2.6`
+  - `com.google.code.findbugs:jsr305:3.0.2`
+
+**Пример использования:**
+```java
+import ru.rpovetkin.intershop.payment.api.DefaultApi;
+import ru.rpovetkin.intershop.payment.model.PaymentPostRequest;
+
+DefaultApi paymentApi = new DefaultApi();
+Boolean canPay = paymentApi.paymentGet(1000.0);
+PaymentPostRequest req = new PaymentPostRequest();
+req.setAmountForPay(1000.0);
+Boolean paid = paymentApi.paymentPost(req);
+```
+
+## Генерация серверного кода (payment-service)
+
+- Используется тот же плагин, но с параметрами:
+  - `generatorName=spring`
+  - `library=spring-boot`
+  - `interfaceOnly=true`
+- Необходимые зависимости для компиляции сгенерированного кода:
+  - `org.openapitools:jackson-databind-nullable:0.2.6`
+  - `com.google.code.findbugs:jsr305:3.0.2`
+  - `io.swagger.core.v3:swagger-annotations:2.2.20`
+  - `io.swagger.core.v3:swagger-models:2.2.20`
+  - `javax.validation:validation-api:2.0.1.Final`
+  - `javax.servlet:javax.servlet-api:4.0.1`
+
+**Пример использования:**
+- Реализуйте сгенерированный интерфейс `PaymentApi` в своём контроллере.
+
+## Как сгенерировать код вручную
+
+- Для генерации кода выполните:
+  ```sh
+  ./mvnw clean package -DskipTests
+  ```
+- Сгенерированные классы появятся в `target/generated-sources/openapi`.
+
+## Важно
+- Не удаляйте необходимые зависимости — они нужны для компиляции сгенерированного кода.
+- Если меняется openapi.yaml, пересоберите проект для обновления клиента/интерфейсов.

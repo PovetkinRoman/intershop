@@ -22,21 +22,6 @@ services:
       - redis_data:/data
     command: redis-server --appendonly yes
 
-  #  web:
-  #    build: .
-  #    ports:
-  #      - "8080:8080"
-  #    # "зависит от",
-  #    depends_on:
-  #      - db
-  #    # переменные окружения
-  #    environment:
-  #      - DB_NAME=intershop
-  #      - POSTGRES_USER=root
-  #      - POSTGRES_PASSWORD=root
-  #      - DB_HOST=db
-  #      - DB_PORT=5432
-
   online-store-app:
     build:
       context: .
