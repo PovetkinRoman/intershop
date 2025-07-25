@@ -52,6 +52,9 @@
     </tr>
     <tr>
         <td style="text-align:right">
+            <div th:if="${paymentError}" style="color:red;text-align:right;">
+                <b th:text="${paymentError}"></b>
+            </div>
             <form action="/cart/items/buy" method="post" th:if="${!empty}">
                 <button th:disabled="${canBuy != null and !canBuy}">Купить</button>
             </form>

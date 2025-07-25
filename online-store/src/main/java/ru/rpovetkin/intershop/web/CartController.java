@@ -17,6 +17,7 @@ import ru.rpovetkin.intershop.service.OrderService;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.math.BigDecimal;
+import java.time.Duration;
 
 @Controller
 @RequestMapping("/cart/items")
@@ -52,10 +53,15 @@ public class CartController {
                             .uri(uriBuilder -> uriBuilder.queryParam("amountForPay", totalPrice).build())
                             .retrieve()
                             .bodyToMono(Boolean.class)
-                            .onErrorReturn(false)
+                            .timeout(Duration.ofSeconds(2))
                             .map(canBuy -> {
                                 model.addAttribute("canBuy", canBuy);
                                 return "cart";
+                            })
+                            .onErrorResume(ex -> {
+                                model.addAttribute("canBuy", false);
+                                model.addAttribute("paymentError", "Платежный сервис временно недоступен. Оформление заказа невозможно.");
+                                return Mono.just("cart");
                             });
                 });
     }
