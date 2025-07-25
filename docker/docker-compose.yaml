@@ -1,0 +1,27 @@
+#services:
+#  postgres:
+#    image: postgres:13.21-alpine3.22
+#    environment:
+#      POSTGRES_USER: intershop1
+#      POSTGRES_PASSWORD: admin123
+#      POSTGRES_DB: intershop
+#    ports:
+#      - "5434:5432"
+#    volumes:
+#      - postgres_data:/var/lib/postgresql/data
+#volumes:
+#  postgres_data:
+
+services:
+  postgres:
+    image: postgres:13.21-alpine3.22
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: intershop
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+volumes:
+  postgres_data:
