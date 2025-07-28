@@ -3,11 +3,15 @@ package ru.rpovetkin.intershop;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import ru.rpovetkin.intershop.conf.PaymentServiceProperties;
+import ru.rpovetkin.intershop.conf.WebClientConfig;
 import ru.rpovetkin.intershop.model.Item;
 import ru.rpovetkin.intershop.service.ItemService;
 import ru.rpovetkin.intershop.service.OrderService;
@@ -24,6 +28,10 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @WebFluxTest(CartController.class)
+@Import({WebClientConfig.class, PaymentServiceProperties.class})
+@TestPropertySource(properties = {
+    "payment.service.base-url=http://localhost:8081"
+})
 class CartControllerTest {
 
     @Autowired
@@ -34,7 +42,6 @@ class CartControllerTest {
 
     @MockitoBean
     OrderService orderService;
-
 
     @Test
     void cartItems_shouldShowEmptyCart() {
@@ -62,6 +69,7 @@ class CartControllerTest {
 
         verify(itemService).findAllInCartSorted();
     }
+
     @Test
     void cartItems_shouldShowItemsWithTotal() {
         List<Item> items = Arrays.asList(

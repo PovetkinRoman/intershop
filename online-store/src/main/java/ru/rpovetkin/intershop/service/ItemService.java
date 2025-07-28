@@ -21,6 +21,7 @@ import java.util.List;
 public class ItemService {
     private final ItemRepository itemRepository;
     private final CacheService cacheService;
+    private final ItemMapperService itemMapperService;
 
     public Mono<Void> changeCountItemsReactive(Long id, String action) {
         Action actionEnum;
@@ -94,11 +95,27 @@ public class ItemService {
     }
 
     /**
+     * Получает карточку товара без кеширования
+     */
+    public Mono<ItemCardDto> getItemCard(Long id) {
+        return findById(id)
+                .map(itemMapperService::toItemCardDto);
+    }
+
+    /**
      * Получает кешированные данные для списка товаров
      */
     public Mono<ItemListDto> getCachedItemList(Long id) {
         return findById(id)
                 .map(cacheService::cacheItemList);
+    }
+
+    /**
+     * Получает данные для списка товаров без кеширования
+     */
+    public Mono<ItemListDto> getItemList(Long id) {
+        return findById(id)
+                .map(itemMapperService::toItemListDto);
     }
 
     /**
@@ -111,10 +128,27 @@ public class ItemService {
     }
 
     /**
+     * Получает список всех товаров без кеширования
+     */
+    public Mono<List<ItemListDto>> getAllItemsList() {
+        return itemRepository.findAll()
+                .collectList()
+                .map(itemMapperService::toItemListDtoList);
+    }
+
+    /**
      * Получает кешированные данные для списка товаров с пагинацией и поиском
      */
     public Flux<ItemListDto> getCachedItemsWithPagination(Pageable pageable, String search) {
         return findAllWithPagination(pageable, search)
                 .map(cacheService::cacheItemList);
+    }
+
+    /**
+     * Получает данные для списка товаров с пагинацией и поиском без кеширования
+     */
+    public Flux<ItemListDto> getItemsWithPagination(Pageable pageable, String search) {
+        return findAllWithPagination(pageable, search)
+                .map(itemMapperService::toItemListDto);
     }
 }
