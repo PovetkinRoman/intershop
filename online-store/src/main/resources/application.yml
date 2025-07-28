@@ -30,3 +30,9 @@ logging:
     org.springframework.http.codec: DEBUG
     org.springframework.data.redis: DEBUG
 #    reactor.netty: DEBUG
+
+# Конфигурация платежного сервиса (по умолчанию для Docker)
+payment:
+  service:
+    base-url: http://payment-service-app:8080
+    payment-path: /payment

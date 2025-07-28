@@ -1,0 +1,10 @@
+# Конфигурация для prod окружения
+payment:
+  service:
+    base-url: https://payment-service.example.com
+    payment-path: /payment
+
+logging:
+  level:
+    root: WARN
+    ru.rpovetkin.intershop: INFO 

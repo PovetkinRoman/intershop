@@ -1,0 +1,10 @@
+# Конфигурация для dev окружения
+payment:
+  service:
+    base-url: http://localhost:8081
+    payment-path: /payment
+
+logging:
+  level:
+    ru.rpovetkin.intershop: DEBUG
+    org.springframework.web: DEBUG 

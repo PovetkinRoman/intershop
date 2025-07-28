@@ -1,0 +1,14 @@
+# Конфигурация для тестового окружения
+payment:
+  service:
+    base-url: http://payment-service-app:8080
+    payment-path: /payment
+
+spring:
+  r2dbc:
+    url: r2dbc:h2:mem:///testdb
+    username: sa
+    password: 
+  sql:
+    init:
+      mode: always 

@@ -91,6 +91,38 @@ docker compose logs -f db
 docker compose logs -f redis
 ```
 
+## Конфигурация
+
+### Профили окружения
+
+Проект поддерживает разные профили для различных окружений:
+
+- **default** (Docker) - `http://payment-service-app:8080`
+- **dev** - `http://localhost:8081` 
+- **prod** - `https://payment-service.example.com`
+
+### Настройка профиля
+
+```bash
+# Для локальной разработки
+java -jar online-store.jar --spring.profiles.active=dev
+
+# Для продакшена
+java -jar online-store.jar --spring.profiles.active=prod
+
+# В Docker (по умолчанию)
+docker compose up -d
+```
+
+### Конфигурационные параметры
+
+```yaml
+payment:
+  service:
+    base-url: http://payment-service-app:8080  # Базовый URL
+    payment-path: /payment                      # Путь к API
+```
+
 ## Доступные endpoints
 
 ### API (с кешированием)
