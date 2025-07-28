@@ -6,21 +6,24 @@ spring:
   sql:
     init:
       mode: always
-  redis:
-    host: redis
-    port: 6379
-    timeout: 2000ms
-    lettuce:
-      pool:
-        max-active: 8
-        max-idle: 8
-        min-idle: 0
-        max-wait: -1ms
+
+# Конфигурация Redis (по умолчанию для Docker)
+redis:
+  enabled: true
+  host: redis
+  port: 6379
+  database: 0
+  timeout: 2000ms
+  pool:
+    max-active: 8
+    max-idle: 8
+    min-idle: 0
+    max-wait: -1ms
   cache:
-    type: redis
-    redis:
-      time-to-live: 3600000 # 1 час
-      cache-null-values: false
+    time-to-live: 3600000 # 1 час
+    cache-null-values: false
+    use-key-prefix: true
+    key-prefix: "intershop:"
 
 logging:
   level:
@@ -30,3 +33,9 @@ logging:
     org.springframework.http.codec: DEBUG
     org.springframework.data.redis: DEBUG
 #    reactor.netty: DEBUG
+
+# Конфигурация платежного сервиса (по умолчанию для Docker)
+payment:
+  service:
+    base-url: http://payment-service-app:8080
+    payment-path: /payment

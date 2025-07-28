@@ -1,18 +1,28 @@
 package ru.rpovetkin.paymentservice.web;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import ru.rpovetkin.paymentservice.conf.PaymentProperties;
 
 import java.math.BigDecimal;
 import reactor.core.publisher.Mono;
+import jakarta.annotation.PostConstruct;
 
 @RestController
 @RequestMapping("/payment")
 @Slf4j
+@RequiredArgsConstructor
 public class PaymentController {
 
-    public static BigDecimal amountOnBalance = new BigDecimal("1000.00");
+    private final PaymentProperties paymentProperties;
+    private BigDecimal amountOnBalance;
+
+    @PostConstruct
+    public void init() {
+        amountOnBalance = paymentProperties.getInitialBalance();
+    }
 
     @GetMapping
     public Mono<ResponseEntity<Boolean>> checkBalance(@RequestParam BigDecimal amountForPay) {

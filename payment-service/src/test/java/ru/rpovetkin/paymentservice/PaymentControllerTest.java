@@ -3,10 +3,17 @@ package ru.rpovetkin.paymentservice;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.reactive.server.WebTestClient;
+import ru.rpovetkin.paymentservice.conf.PaymentProperties;
 import ru.rpovetkin.paymentservice.web.PaymentController;
 
 @WebFluxTest(controllers = PaymentController.class)
+@Import(PaymentProperties.class)
+@TestPropertySource(properties = {
+    "payment.initial-balance=1000.00"
+})
 public class PaymentControllerTest {
 
     @Autowired

@@ -10,16 +10,17 @@ import ru.rpovetkin.intershop.model.ItemCardDto;
 import ru.rpovetkin.intershop.model.ItemListDto;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class CacheService {
 
-    private static final String ITEM_CARD_CACHE = "item-card";
-    private static final String ITEM_LIST_CACHE = "item-list";
-    private static final String ITEM_LIST_ALL_CACHE = "item-list-all";
+    public static final String ITEM_CARD_CACHE = "item-card";
+    public static final String ITEM_LIST_CACHE = "item-list";
+    public static final String ITEM_LIST_ALL_CACHE = "item-list-all";
+
+    private final ItemMapperService itemMapperService;
 
     /**
      * Кеширует карточку товара
@@ -27,13 +28,7 @@ public class CacheService {
     @Cacheable(value = ITEM_CARD_CACHE, key = "#item.id")
     public ItemCardDto cacheItemCard(Item item) {
         log.debug("Caching item card for id: {}", item.getId());
-        return new ItemCardDto(
-                item.getId(),
-                item.getImgPath(),
-                item.getTitle(),
-                item.getPrice(),
-                item.getDescription()
-        );
+        return itemMapperService.toItemCardDto(item);
     }
 
     /**
@@ -42,12 +37,7 @@ public class CacheService {
     @Cacheable(value = ITEM_LIST_CACHE, key = "#item.id")
     public ItemListDto cacheItemList(Item item) {
         log.debug("Caching item list data for id: {}", item.getId());
-        return new ItemListDto(
-                item.getId(),
-                item.getTitle(),
-                item.getDescription(),
-                item.getPrice()
-        );
+        return itemMapperService.toItemListDto(item);
     }
 
     /**
@@ -56,9 +46,7 @@ public class CacheService {
     @Cacheable(value = ITEM_LIST_ALL_CACHE, key = "'all'")
     public List<ItemListDto> cacheAllItemsList(List<Item> items) {
         log.debug("Caching all items list, count: {}", items.size());
-        return items.stream()
-                .map(this::cacheItemList)
-                .collect(Collectors.toList());
+        return itemMapperService.toItemListDtoList(items);
     }
 
     /**

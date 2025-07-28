@@ -20,7 +20,7 @@
 
 ## Кеширование
 
-Проект использует Redis для кеширования данных товаров:
+Проект использует Redis для кеширования данных товаров с автоматической очисткой кеша через AOP.
 
 ### API Endpoints с кешированием:
 - `GET /api/items` - список всех товаров (кешируется)
@@ -36,6 +36,27 @@
 - `item-list::{id}` - данные для списка товаров
 
 TTL кеша: 1 час
+
+### Автоматическая очистка кеша
+
+Используется AOP aspect для автоматической очистки кеша:
+
+```java
+@CacheEvict(value = CacheEvict.CacheEvictType.ITEM)
+public Mono<Void> changeCountItemsReactive(Long id, String action) {
+    // Логика изменения товара
+}
+
+@CacheEvict(value = CacheEvict.CacheEvictType.ALL_ITEMS)
+public Mono<Void> setItemCountZeroAllInCart() {
+    // Логика очистки корзины
+}
+```
+
+**Типы очистки кеша:**
+- `ITEM` - очищает кеш конкретного товара
+- `ALL_ITEMS` - очищает кеш всех товаров
+- `ALL` - очищает все кеши
 
 ## Запуск проекта
 
@@ -89,6 +110,59 @@ docker compose logs -f online-store-app
 docker compose logs -f payment-service-app
 docker compose logs -f db
 docker compose logs -f redis
+```
+
+## Конфигурация
+
+### Профили окружения
+
+Проект поддерживает разные профили для различных окружений:
+
+- **default** (Docker) - `http://payment-service-app:8080`
+- **dev** - `http://localhost:8081` 
+- **prod** - `https://payment-service.example.com`
+
+### Настройка профиля
+
+```bash
+# Для локальной разработки
+java -jar online-store.jar --spring.profiles.active=dev
+
+# Для продакшена
+java -jar online-store.jar --spring.profiles.active=prod
+
+# В Docker (по умолчанию)
+docker compose up -d
+```
+
+### Конфигурационные параметры
+
+#### Платежный сервис
+```yaml
+payment:
+  service:
+    base-url: http://payment-service-app:8080  # Базовый URL
+    payment-path: /payment                      # Путь к API
+```
+
+#### Redis кеширование
+```yaml
+redis:
+  host: redis                                  # Хост Redis сервера
+  port: 6379                                   # Порт Redis сервера
+  database: 0                                  # Номер базы данных
+  password:                                    # Пароль (опционально)
+  timeout: 2000ms                              # Таймаут подключения
+  pool:
+    max-active: 8                              # Максимум активных соединений
+    max-idle: 8                                # Максимум неактивных соединений
+    min-idle: 0                                # Минимум неактивных соединений
+    max-wait: -1ms                             # Максимум времени ожидания
+  cache:
+    time-to-live: 3600000                      # Время жизни кеша (1 час)
+    cache-null-values: false                   # Кешировать null значения
+    use-key-prefix: true                       # Использовать префикс ключей
+    key-prefix: "intershop:"                   # Префикс для ключей
 ```
 
 ## Доступные endpoints
