@@ -20,7 +20,7 @@
 
 ## Кеширование
 
-Проект использует Redis для кеширования данных товаров:
+Проект использует Redis для кеширования данных товаров с автоматической очисткой кеша через AOP.
 
 ### API Endpoints с кешированием:
 - `GET /api/items` - список всех товаров (кешируется)
@@ -36,6 +36,27 @@
 - `item-list::{id}` - данные для списка товаров
 
 TTL кеша: 1 час
+
+### Автоматическая очистка кеша
+
+Используется AOP aspect для автоматической очистки кеша:
+
+```java
+@CacheEvict(value = CacheEvict.CacheEvictType.ITEM)
+public Mono<Void> changeCountItemsReactive(Long id, String action) {
+    // Логика изменения товара
+}
+
+@CacheEvict(value = CacheEvict.CacheEvictType.ALL_ITEMS)
+public Mono<Void> setItemCountZeroAllInCart() {
+    // Логика очистки корзины
+}
+```
+
+**Типы очистки кеша:**
+- `ITEM` - очищает кеш конкретного товара
+- `ALL_ITEMS` - очищает кеш всех товаров
+- `ALL` - очищает все кеши
 
 ## Запуск проекта
 

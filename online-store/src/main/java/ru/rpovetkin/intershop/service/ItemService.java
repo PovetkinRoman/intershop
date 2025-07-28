@@ -6,6 +6,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import ru.rpovetkin.intershop.annotation.CacheEvict;
 import ru.rpovetkin.intershop.model.Action;
 import ru.rpovetkin.intershop.model.Item;
 import ru.rpovetkin.intershop.model.ItemCardDto;
@@ -22,6 +23,7 @@ public class ItemService {
     private final ItemRepository itemRepository;
     private final CacheService cacheService;
 
+    @CacheEvict(value = CacheEvict.CacheEvictType.ITEM)
     public Mono<Void> changeCountItemsReactive(Long id, String action) {
         Action actionEnum;
         try {
@@ -46,10 +48,6 @@ public class ItemService {
                     }
                     return itemRepository.save(item);
                 })
-                .doOnSuccess(item -> {
-                    // Очищаем кеш после изменения товара
-                    cacheService.evictAllItemCaches(id);
-                })
                 .then();
     }
 
@@ -71,12 +69,9 @@ public class ItemService {
                 .sort(Comparator.comparing(Item::getId));
     }
 
+    @CacheEvict(value = CacheEvict.CacheEvictType.ALL_ITEMS)
     public Mono<Void> setItemCountZeroAllInCart() {
         return itemRepository.setItemCountZeroForAllInCart()
-                .doOnSuccess(v -> {
-                    // Очищаем кеш всех товаров после очистки корзины
-                    cacheService.evictAllItemsList();
-                })
                 .then();
     }
 
