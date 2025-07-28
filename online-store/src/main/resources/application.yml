@@ -1,0 +1,41 @@
+spring:
+  r2dbc:
+    url: r2dbc:postgresql://db:5432/intershop
+    username: root
+    password: root
+  sql:
+    init:
+      mode: always
+
+# Конфигурация Redis (по умолчанию для Docker)
+redis:
+  enabled: true
+  host: redis
+  port: 6379
+  database: 0
+  timeout: 2000ms
+  pool:
+    max-active: 8
+    max-idle: 8
+    min-idle: 0
+    max-wait: -1ms
+  cache:
+    time-to-live: 3600000 # 1 час
+    cache-null-values: false
+    use-key-prefix: true
+    key-prefix: "intershop:"
+
+logging:
+  level:
+    root: INFO
+    ru.rpovetkin: DEBUG
+    org.springframework.web: TRACE
+    org.springframework.http.codec: DEBUG
+    org.springframework.data.redis: DEBUG
+#    reactor.netty: DEBUG
+
+# Конфигурация платежного сервиса (по умолчанию для Docker)
+payment:
+  service:
+    base-url: http://payment-service-app:8080
+    payment-path: /payment
