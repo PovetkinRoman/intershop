@@ -17,6 +17,8 @@ import ru.rpovetkin.intershop.service.OrderService;
 
 import java.math.BigDecimal;
 import java.time.Duration;
+import java.util.List;
+import ru.rpovetkin.intershop.model.Item;
 
 @Controller
 @RequestMapping("/cart/items")
@@ -28,6 +30,15 @@ public class CartController {
     private final OrderService orderService;
     private final WebClient paymentServiceWebClient;
 
+    /**
+     * Рассчитывает общую сумму корзины
+     */
+    private BigDecimal calculateTotalPrice(List<Item> items) {
+        return items.stream()
+                .map(item -> item.getPrice().multiply(BigDecimal.valueOf(item.getCount())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
     @GetMapping
     public Mono<String> cartItems(Model model) {
         return itemService.findAllInCartSorted()
@@ -35,9 +46,7 @@ public class CartController {
                 .flatMap(items -> {
                     model.addAttribute("items", items);
 
-                    BigDecimal totalPrice = items.stream()
-                            .map(item -> item.getPrice().multiply(BigDecimal.valueOf(item.getCount())))
-                            .reduce(BigDecimal.ZERO, BigDecimal::add);
+                    BigDecimal totalPrice = calculateTotalPrice(items);
 
                     model.addAttribute("total", totalPrice);
                     model.addAttribute("empty", items.isEmpty());
@@ -83,9 +92,7 @@ public class CartController {
                     if (items.isEmpty()) {
                         return Mono.error(new IllegalArgumentException("Cart is empty"));
                     }
-                    BigDecimal totalPrice = items.stream()
-                            .map(item -> item.getPrice().multiply(BigDecimal.valueOf(item.getCount())))
-                            .reduce(BigDecimal.ZERO, BigDecimal::add);
+                    BigDecimal totalPrice = calculateTotalPrice(items);
                     // Запрос на оплату
                     return paymentServiceWebClient.post()
                             .uri(uriBuilder -> uriBuilder.queryParam("amountForPay", totalPrice).build())
