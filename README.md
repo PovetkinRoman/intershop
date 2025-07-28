@@ -137,11 +137,32 @@ docker compose up -d
 
 ### Конфигурационные параметры
 
+#### Платежный сервис
 ```yaml
 payment:
   service:
     base-url: http://payment-service-app:8080  # Базовый URL
     payment-path: /payment                      # Путь к API
+```
+
+#### Redis кеширование
+```yaml
+redis:
+  host: redis                                  # Хост Redis сервера
+  port: 6379                                   # Порт Redis сервера
+  database: 0                                  # Номер базы данных
+  password:                                    # Пароль (опционально)
+  timeout: 2000ms                              # Таймаут подключения
+  pool:
+    max-active: 8                              # Максимум активных соединений
+    max-idle: 8                                # Максимум неактивных соединений
+    min-idle: 0                                # Минимум неактивных соединений
+    max-wait: -1ms                             # Максимум времени ожидания
+  cache:
+    time-to-live: 3600000                      # Время жизни кеша (1 час)
+    cache-null-values: false                   # Кешировать null значения
+    use-key-prefix: true                       # Использовать префикс ключей
+    key-prefix: "intershop:"                   # Префикс для ключей
 ```
 
 ## Доступные endpoints

@@ -4,6 +4,23 @@ payment:
     base-url: http://localhost:8081
     payment-path: /payment
 
+# Конфигурация Redis для dev окружения
+redis:
+  host: localhost
+  port: 6379
+  database: 0
+  timeout: 2000ms
+  pool:
+    max-active: 4
+    max-idle: 4
+    min-idle: 0
+    max-wait: 1000ms
+  cache:
+    time-to-live: 1800000 # 30 минут для разработки
+    cache-null-values: false
+    use-key-prefix: true
+    key-prefix: "intershop:dev:"
+
 logging:
   level:
     ru.rpovetkin.intershop: DEBUG
