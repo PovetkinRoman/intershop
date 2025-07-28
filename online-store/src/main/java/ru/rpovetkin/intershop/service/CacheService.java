@@ -17,9 +17,9 @@ import java.util.stream.Collectors;
 @Slf4j
 public class CacheService {
 
-    private static final String ITEM_CARD_CACHE = "item-card";
-    private static final String ITEM_LIST_CACHE = "item-list";
-    private static final String ITEM_LIST_ALL_CACHE = "item-list-all";
+    public static final String ITEM_CARD_CACHE = "item-card";
+    public static final String ITEM_LIST_CACHE = "item-list";
+    public static final String ITEM_LIST_ALL_CACHE = "item-list-all";
 
     /**
      * Кеширует карточку товара
