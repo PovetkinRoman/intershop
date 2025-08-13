@@ -1,0 +1,43 @@
+openapi: 3.0.3
+info:
+  title: Payment Service API
+  version: 1.0.0
+servers:
+  - url: http://payment-service-app:8080
+paths:
+  /payment:
+    get:
+      summary: Проверить, хватает ли средств для оплаты
+      parameters:
+        - in: query
+          name: amountForPay
+          schema:
+            type: number
+            format: double
+          required: true
+      responses:
+        '200':
+          description: Достаточно ли средств
+          content:
+            application/json:
+              schema:
+                type: boolean
+    post:
+      summary: Провести оплату
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                amountForPay:
+                  type: number
+                  format: double
+      responses:
+        '200':
+          description: Успешно оплачено или нет
+          content:
+            application/json:
+              schema:
+                type: boolean 

@@ -1,0 +1,28 @@
+# Конфигурация для prod окружения
+payment:
+  service:
+    base-url: https://payment-service.example.com
+    payment-path: /payment
+
+# Конфигурация Redis для prod окружения
+redis:
+  host: redis.prod.example.com
+  port: 6379
+  database: 0
+  password: ${REDIS_PASSWORD:}
+  timeout: 5000ms
+  pool:
+    max-active: 16
+    max-idle: 8
+    min-idle: 2
+    max-wait: 2000ms
+  cache:
+    time-to-live: 7200000 # 2 часа для продакшена
+    cache-null-values: false
+    use-key-prefix: true
+    key-prefix: "intershop:prod:"
+
+logging:
+  level:
+    root: WARN
+    ru.rpovetkin.intershop: INFO 
