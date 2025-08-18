@@ -10,7 +10,10 @@ import ru.rpovetkin.intershop.model.Action;
 import ru.rpovetkin.intershop.model.Item;
 import ru.rpovetkin.intershop.model.ItemCardDto;
 import ru.rpovetkin.intershop.model.ItemListDto;
+import ru.rpovetkin.intershop.model.CartItem;
 import ru.rpovetkin.intershop.repository.ItemRepository;
+import ru.rpovetkin.intershop.repository.CartItemRepository;
+import ru.rpovetkin.intershop.repository.UserRepository;
 
 import java.util.Comparator;
 import java.util.List;
@@ -22,8 +25,10 @@ public class ItemService {
     private final ItemRepository itemRepository;
     private final CacheService cacheService;
     private final ItemMapperService itemMapperService;
+    private final CartItemRepository cartItemRepository;
+    private final UserRepository userRepository;
 
-    public Mono<Void> changeCountItemsReactive(Long id, String action) {
+    public Mono<Void> changeCountItemsReactive(Long itemId, String action, String username) {
         Action actionEnum;
         try {
             actionEnum = Action.valueOf(action.trim().toUpperCase());
@@ -31,27 +36,44 @@ public class ItemService {
             return Mono.error(new IllegalStateException("Invalid action: " + action));
         }
 
-        return itemRepository.findById(id)
-                .switchIfEmpty(Mono.error(new IllegalArgumentException("Item not found")))
-                .flatMap(item -> {
-                    switch (actionEnum) {
-                        case DELETE:
-                            item.setCount(0);
-                            break;
-                        case PLUS:
-                            item.setCount(item.getCount() + 1);
-                            break;
-                        case MINUS:
-                            item.setCount(Math.max(item.getCount() - 1, 0));
-                            break;
-                    }
-                    return itemRepository.save(item);
-                })
-                .doOnSuccess(item -> {
-                    // Очищаем кеш после изменения товара
-                    cacheService.evictAllItemCaches(id);
-                })
+        return userRepository.findByUsername(username)
+                .switchIfEmpty(Mono.error(new IllegalArgumentException("User not found")))
+                .flatMap(user -> itemRepository.findById(itemId)
+                        .switchIfEmpty(Mono.error(new IllegalArgumentException("Item not found")))
+                        .then(cartItemRepository.findByUserIdAndItemId(user.getId(), itemId))
+                        .flatMap(existing -> {
+                            switch (actionEnum) {
+                                case DELETE:
+                                    return cartItemRepository.deleteByUserIdAndItemId(user.getId(), itemId).then(Mono.empty());
+                                case PLUS:
+                                    existing.setCount(existing.getCount() + 1);
+                                    return cartItemRepository.save(existing);
+                                case MINUS:
+                                    int next = Math.max(existing.getCount() - 1, 0);
+                                    if (next == 0) {
+                                        return cartItemRepository.deleteByUserIdAndItemId(user.getId(), itemId).then(Mono.empty());
+                                    }
+                                    existing.setCount(next);
+                                    return cartItemRepository.save(existing);
+                            }
+                            return Mono.empty();
+                        })
+                        .switchIfEmpty(Mono.defer(() -> {
+                            if (actionEnum == Action.PLUS) {
+                                return cartItemRepository.save(new CartItem(user.getId(), itemId, 1));
+                            }
+                            return Mono.empty();
+                        }))
+                        .then())
+                .doOnSuccess(v -> cacheService.evictAllItemCaches(itemId))
                 .then();
+    }
+
+    // Backward-compatible overload for tests/callers without explicit username
+    public Mono<Void> changeCountItemsReactive(Long itemId, String action) {
+        return org.springframework.security.core.context.ReactiveSecurityContextHolder.getContext()
+                .map(ctx -> ctx.getAuthentication().getName())
+                .flatMap(username -> changeCountItemsReactive(itemId, action, username));
     }
 
     public Flux<Item> findAllWithPagination(Pageable pageable, String search) {
@@ -67,23 +89,63 @@ public class ItemService {
                         !search.isEmpty()));
     }
 
-    public Flux<Item> findAllInCartSorted() {
-        return itemRepository.findItemsForCart()
-                .sort(Comparator.comparing(Item::getId));
+    public Flux<Item> findAllWithPaginationForUser(Pageable pageable, String search, String username) {
+        return userRepository.findByUsername(username)
+                .flatMapMany(user -> findAllWithPagination(pageable, search)
+                        .flatMap(item -> cartItemRepository.findByUserIdAndItemId(user.getId(), item.getId())
+                                .defaultIfEmpty(new CartItem(user.getId(), item.getId(), 0))
+                                .map(ci -> {
+                                    item.setCount(ci.getCount());
+                                    return item;
+                                })
+                        )
+                );
     }
 
-    public Mono<Void> setItemCountZeroAllInCart() {
-        return itemRepository.setItemCountZeroForAllInCart()
-                .doOnSuccess(v -> {
-                    // Очищаем кеш всех товаров после очистки корзины
-                    cacheService.evictAllItemsList();
-                })
+    public Flux<Item> findAllInCartSorted(String username) {
+        return userRepository.findByUsername(username)
+                .flatMapMany(user -> cartItemRepository.findByUserId(user.getId())
+                        .flatMap(cartItem -> itemRepository.findById(cartItem.getItemId())
+                                .map(item -> {
+                                    item.setCount(cartItem.getCount());
+                                    return item;
+                                }))
+                        .sort(Comparator.comparing(Item::getId))
+                );
+    }
+
+    // Backward-compatible overload for tests/callers without explicit username
+    public Flux<Item> findAllInCartSorted() {
+        return org.springframework.security.core.context.ReactiveSecurityContextHolder.getContext()
+                .map(ctx -> ctx.getAuthentication().getName())
+                .flatMapMany(this::findAllInCartSorted);
+    }
+
+    public Mono<Void> setItemCountZeroAllInCart(String username) {
+        return userRepository.findByUsername(username)
+                .switchIfEmpty(Mono.error(new IllegalArgumentException("User not found")))
+                .flatMap(user -> cartItemRepository.deleteByUserId(user.getId()))
+                .doOnSuccess(v -> cacheService.evictAllItemsList())
                 .then();
     }
 
     public Mono<Item> findById(Long id) {
         return itemRepository.findById(id)
                 .switchIfEmpty(Mono.error(new RuntimeException("Item not found with id: " + id)));
+    }
+
+    public Mono<Item> findByIdWithUserCount(Long id, String username) {
+        return userRepository.findByUsername(username)
+                .flatMap(user -> itemRepository.findById(id)
+                        .switchIfEmpty(Mono.error(new RuntimeException("Item not found with id: " + id)))
+                        .flatMap(item -> cartItemRepository.findByUserIdAndItemId(user.getId(), id)
+                                .defaultIfEmpty(new CartItem(user.getId(), id, 0))
+                                .map(ci -> {
+                                    item.setCount(ci.getCount());
+                                    return item;
+                                })
+                        )
+                );
     }
 
     /**

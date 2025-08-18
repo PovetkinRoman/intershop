@@ -34,3 +34,18 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
+
+-- Ownership for orders and per-user carts
+ALTER TABLE IF EXISTS orders
+    ADD COLUMN IF NOT EXISTS user_id BIGINT REFERENCES users(id);
+
+CREATE TABLE IF NOT EXISTS cart_item (
+    id BIGSERIAL PRIMARY KEY,
+    user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    item_id BIGINT NOT NULL REFERENCES item(id),
+    count INTEGER NOT NULL,
+    UNIQUE (user_id, item_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_cart_item_user_id ON cart_item(user_id);
+CREATE INDEX IF NOT EXISTS idx_cart_item_item_id ON cart_item(item_id);

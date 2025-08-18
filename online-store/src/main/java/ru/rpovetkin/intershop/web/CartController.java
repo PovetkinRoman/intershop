@@ -40,8 +40,10 @@ public class CartController {
     }
 
     @GetMapping
-    public Mono<String> cartItems(Model model) {
-        return itemService.findAllInCartSorted()
+    public Mono<String> cartItems(Model model, ServerWebExchange exchange) {
+        return exchange.getPrincipal()
+                .map(java.security.Principal::getName)
+                .flatMapMany(username -> itemService.findAllInCartSorted(username))
                 .collectList()
                 .flatMap(items -> {
                     model.addAttribute("items", items);
@@ -76,17 +78,21 @@ public class CartController {
 
     @PostMapping("/{id}")
     public Mono<String> cartChangeItem(@PathVariable(name = "id") Long id, ServerWebExchange exchange) {
-        return exchange.getFormData()
-            .flatMap(formData -> {
-                String action = formData.getFirst("action");
-                return itemService.changeCountItemsReactive(id, action)
+        return Mono.zip(
+                exchange.getPrincipal().map(java.security.Principal::getName),
+                exchange.getFormData()
+        ).flatMap(tuple -> {
+            String username = tuple.getT1();
+            String action = tuple.getT2().getFirst("action");
+            return itemService.changeCountItemsReactive(id, action, username)
                     .thenReturn("redirect:/cart/items");
-            });
+        });
     }
 
     @PostMapping("/buy")
-    public Mono<String> cartBuyItems() {
-        return itemService.findAllInCartSorted()
+    public Mono<String> cartBuyItems(ServerWebExchange exchange) {
+        return exchange.getPrincipal().map(java.security.Principal::getName)
+                .flatMapMany(username -> itemService.findAllInCartSorted(username))
                 .collectList()
                 .flatMap(items -> {
                     if (items.isEmpty()) {
@@ -101,11 +107,14 @@ public class CartController {
                             .onErrorReturn(false)
                             .flatMap(isPayed -> {
                                 if (!isPayed) {
-                                    return Mono.just("redirect:/cart/items?error=Недостаточно средств для оплаты");
+                                    String msg = java.net.URLEncoder.encode("Недостаточно средств для оплаты", java.nio.charset.StandardCharsets.UTF_8);
+                                    return Mono.just("redirect:/cart/items?error=" + msg);
                                 }
-                                return orderService.createOrder(Flux.fromIterable(items))
-                                        .flatMap(order -> itemService.setItemCountZeroAllInCart()
-                                                .thenReturn("redirect:/orders/" + order.getId() + "?newOrder=true"));
+                                return exchange.getPrincipal().map(java.security.Principal::getName)
+                                        .flatMap(username -> orderService.createOrder(Flux.fromIterable(items), username)
+                                                .flatMap(order -> itemService.setItemCountZeroAllInCart(username)
+                                                        .thenReturn("redirect:/orders/" + order.getId() + "?newOrder=true"))
+                                        );
                             });
                 })
                 .onErrorResume(e -> Mono.just("redirect:/cart?error=" + e.getMessage()));

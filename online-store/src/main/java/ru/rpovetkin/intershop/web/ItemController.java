@@ -22,21 +22,26 @@ public class ItemController {
 
     @PostMapping("/{id}")
     public Mono<Rendering> changeItem(@PathVariable Long id, ServerWebExchange exchange) {
-        return exchange.getFormData()
-                .flatMap(formData -> {
-                    String action = formData.getFirst("action");
-                    log.debug("changeItem: id={}, action={}", id, action);
+        return Mono.zip(
+                exchange.getPrincipal().map(java.security.Principal::getName),
+                exchange.getFormData()
+        ).flatMap(tuple -> {
+            String username = tuple.getT1();
+            String action = tuple.getT2().getFirst("action");
+            log.debug("changeItem: id={}, action={}", id, action);
 
-                    return itemService.changeCountItemsReactive(id, action)
-                            .then(Mono.just(Rendering.redirectTo("/items/{id}")
-                                    .modelAttribute("id", id)
-                                    .build()));
-                });
+            return itemService.changeCountItemsReactive(id, action, username)
+                    .then(Mono.just(Rendering.redirectTo("/items/{id}")
+                            .modelAttribute("id", id)
+                            .build()));
+        });
     }
 
     @GetMapping("/{id}")
     public Mono<Rendering> showItem(@PathVariable Long id) {
-        return itemService.findById(id)
+        return org.springframework.security.core.context.ReactiveSecurityContextHolder.getContext()
+                .map(sc -> sc.getAuthentication().getName())
+                .flatMap(username -> itemService.findByIdWithUserCount(id, username))
                 .map(item -> Rendering.view("item")
                         .modelAttribute("item", item)
                         .build())

@@ -42,7 +42,9 @@ public class MainItemController {
 
         Pageable pageable = PageRequest.of(pageNumber - 1, pageSize, sorting);
 
-        return itemService.findAllWithPagination(pageable, search)
+        return org.springframework.security.core.context.ReactiveSecurityContextHolder.getContext()
+                .map(sc -> sc.getAuthentication().getName())
+                .flatMapMany(username -> itemService.findAllWithPaginationForUser(pageable, search, username))
                 .collectList()
                 .map(items -> {
                     Paging paging = new Paging(
@@ -63,15 +65,17 @@ public class MainItemController {
 
     @PostMapping("/{id}")
     public Mono<Rendering> changeItem(@PathVariable Long id, ServerWebExchange exchange) {
-        return exchange.getFormData()
-                .flatMap(formData -> {
-                    String action = formData.getFirst("action");
-                    log.debug("changeItem: id={}, action={}", id, action);
+        return Mono.zip(
+                exchange.getPrincipal().map(java.security.Principal::getName),
+                exchange.getFormData()
+        ).flatMap(tuple -> {
+            String username = tuple.getT1();
+            String action = tuple.getT2().getFirst("action");
+            log.debug("changeItem: id={}, action={}", id, action);
 
-                    return itemService.changeCountItemsReactive(id, action)
-                            .then(Mono.just(Rendering.redirectTo("/main/items")
-                                    .build()));
-                });
+            return itemService.changeCountItemsReactive(id, action, username)
+                    .then(Mono.just(Rendering.redirectTo("/main/items").build()));
+        });
     }
 
     @GetMapping("/{id}")

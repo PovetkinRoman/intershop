@@ -28,8 +28,9 @@ public class OrdersController {
     private final OrderItemRepository orderItemRepo;
 
     @GetMapping
-    public Mono<String> orders(Model model) {
-        return orderService.findAllOrders()
+    public Mono<String> orders(Model model, org.springframework.web.server.ServerWebExchange exchange) {
+        return exchange.getPrincipal().map(java.security.Principal::getName)
+                .flatMapMany(orderService::findAllOrdersByUsername)
                 .flatMap(order ->
                         orderItemRepo.findByOrderId(order.getId())
                                 .flatMap(orderItem ->
@@ -65,7 +66,9 @@ public class OrdersController {
             @RequestParam(name = "newOrder", required = false) Boolean newOrder,
             Model model
     ) {
-        return orderService.findOrderById(id)
+        return org.springframework.security.core.context.ReactiveSecurityContextHolder.getContext()
+                .map(sc -> sc.getAuthentication().getName())
+                .flatMap(username -> orderService.findOrderByIdForUser(id, username))
                 .flatMap(order -> {
                     model.addAttribute("order", order);
                     model.addAttribute("id", order.getUuid());
