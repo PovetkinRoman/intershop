@@ -20,7 +20,7 @@ public class UserDetailsServiceImpl implements ReactiveUserDetailsService {
         return userRepository.findByUsername(username)
                 .map(user -> User.withUsername(user.getUsername())
                         .password(user.getPassword())
-                        .authorities("ROLE_USER")
+                        .authorities("ROLE_" + (user.getRole() == null ? "USER" : user.getRole().toUpperCase()))
                         .accountExpired(false)
                         .accountLocked(false)
                         .credentialsExpired(false)

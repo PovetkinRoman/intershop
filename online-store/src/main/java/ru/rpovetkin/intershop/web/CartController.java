@@ -2,6 +2,8 @@ package ru.rpovetkin.intershop.web;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -40,10 +42,11 @@ public class CartController {
     }
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
     public Mono<String> cartItems(Model model, ServerWebExchange exchange) {
-        return exchange.getPrincipal()
-                .map(java.security.Principal::getName)
-                .flatMapMany(username -> itemService.findAllInCartSorted(username))
+        return ReactiveSecurityContextHolder.getContext()
+                .map(ctx -> ctx.getAuthentication().getName())
+                .flatMapMany(itemService::findAllInCartSorted)
                 .collectList()
                 .flatMap(items -> {
                     model.addAttribute("items", items);
@@ -77,9 +80,11 @@ public class CartController {
     }
 
     @PostMapping("/{id}")
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
     public Mono<String> cartChangeItem(@PathVariable(name = "id") Long id, ServerWebExchange exchange) {
         return Mono.zip(
-                exchange.getPrincipal().map(java.security.Principal::getName),
+                ReactiveSecurityContextHolder.getContext()
+                        .map(ctx -> ctx.getAuthentication().getName()),
                 exchange.getFormData()
         ).flatMap(tuple -> {
             String username = tuple.getT1();
@@ -90,9 +95,11 @@ public class CartController {
     }
 
     @PostMapping("/buy")
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
     public Mono<String> cartBuyItems(ServerWebExchange exchange) {
-        return exchange.getPrincipal().map(java.security.Principal::getName)
-                .flatMapMany(username -> itemService.findAllInCartSorted(username))
+        return ReactiveSecurityContextHolder.getContext()
+                .map(ctx -> ctx.getAuthentication().getName())
+                .flatMapMany(itemService::findAllInCartSorted)
                 .collectList()
                 .flatMap(items -> {
                     if (items.isEmpty()) {

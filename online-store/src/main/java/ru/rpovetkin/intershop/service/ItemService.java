@@ -99,6 +99,12 @@ public class ItemService {
                                     return item;
                                 })
                         )
+                )
+                .switchIfEmpty(findAllWithPagination(pageable, search)
+                        .map(item -> {
+                            item.setCount(0);
+                            return item;
+                        })
                 );
     }
 
@@ -145,6 +151,13 @@ public class ItemService {
                                     return item;
                                 })
                         )
+                )
+                .switchIfEmpty(itemRepository.findById(id)
+                        .switchIfEmpty(Mono.error(new RuntimeException("Item not found with id: " + id)))
+                        .map(item -> {
+                            item.setCount(0);
+                            return item;
+                        })
                 );
     }
 

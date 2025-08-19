@@ -12,4 +12,9 @@ public class RootController {
     public String redirectToMain() {
         return "redirect:/main/items";
     }
+
+    @GetMapping("/403")
+    public String error403() {
+        return "403";
+    }
 }

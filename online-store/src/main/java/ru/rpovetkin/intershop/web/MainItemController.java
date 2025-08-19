@@ -5,6 +5,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -42,31 +44,38 @@ public class MainItemController {
 
         Pageable pageable = PageRequest.of(pageNumber - 1, pageSize, sorting);
 
-        return org.springframework.security.core.context.ReactiveSecurityContextHolder.getContext()
-                .map(sc -> sc.getAuthentication().getName())
-                .flatMapMany(username -> itemService.findAllWithPaginationForUser(pageable, search, username))
-                .collectList()
-                .map(items -> {
-                    Paging paging = new Paging(
-                            pageNumber,
-                            pageSize,
-                            false,
-                            false
-                    );
+        return ReactiveSecurityContextHolder.getContext()
+                .map(ctx -> ctx.getAuthentication())
+                .flatMap(auth -> itemService.findAllWithPaginationForUser(pageable, search, auth.getName())
+                        .collectList()
+                        .map(items -> {
+                            Paging paging = new Paging(
+                                    pageNumber,
+                                    pageSize,
+                                    false,
+                                    false
+                            );
 
-                    return Rendering.view("main")
-                            .modelAttribute("items", items)
-                            .modelAttribute("paging", paging)
-                            .modelAttribute("search", search)
-                            .modelAttribute("sort", sort)
-                            .build();
-                });
+                            boolean isUser = auth.isAuthenticated() && auth.getAuthorities().stream()
+                                    .noneMatch(a -> "ROLE_ANONYMOUS".equals(a.getAuthority()));
+
+                            return Rendering.view("main")
+                                    .modelAttribute("items", items)
+                                    .modelAttribute("paging", paging)
+                                    .modelAttribute("search", search)
+                                    .modelAttribute("sort", sort)
+                                    .modelAttribute("isUser", isUser)
+                                    .build();
+                        })
+                );
     }
 
     @PostMapping("/{id}")
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
     public Mono<Rendering> changeItem(@PathVariable Long id, ServerWebExchange exchange) {
         return Mono.zip(
-                exchange.getPrincipal().map(java.security.Principal::getName),
+                ReactiveSecurityContextHolder.getContext()
+                        .map(ctx -> ctx.getAuthentication().getName()),
                 exchange.getFormData()
         ).flatMap(tuple -> {
             String username = tuple.getT1();
@@ -80,8 +89,17 @@ public class MainItemController {
 
     @GetMapping("/{id}")
     public Mono<String> showItems(@PathVariable(name = "id") Long id, Model model) {
-        return itemService.findById(id)
-                .doOnNext(item -> model.addAttribute("item", item))
-                .map(item -> "item");
+        Mono<Boolean> isUserMono = ReactiveSecurityContextHolder.getContext()
+                .map(ctx -> ctx.getAuthentication())
+                .map(auth -> auth.isAuthenticated() && auth.getAuthorities().stream()
+                        .noneMatch(a -> "ROLE_ANONYMOUS".equals(a.getAuthority())))
+                .defaultIfEmpty(false);
+
+        return Mono.zip(itemService.findById(id), isUserMono)
+                .doOnNext(tuple -> {
+                    model.addAttribute("item", tuple.getT1());
+                    model.addAttribute("isUser", tuple.getT2());
+                })
+                .thenReturn("item");
     }
 }

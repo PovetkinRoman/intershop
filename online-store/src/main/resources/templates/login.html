@@ -90,7 +90,7 @@
     <div class="login-container">
         <h2>Вход в систему</h2>
         
-        <div th:if="${param.error}" class="error-message">
+        <div th:if="${#maps.containsKey(param, 'error')}" class="error-message">
             Неверное имя пользователя или пароль.
         </div>
         

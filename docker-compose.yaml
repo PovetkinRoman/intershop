@@ -25,7 +25,7 @@ services:
   online-store-app:
     build:
       context: .
-      dockerfile: online-store/Dockerfile
+      dockerfile: online-store/dockerfile
     ports:
       - "8080:8080"
     depends_on:
@@ -43,7 +43,7 @@ services:
   payment-service-app:
     build:
       context: .
-      dockerfile: payment-service/Dockerfile
+      dockerfile: payment-service/dockerfile
     ports:
       - "8081:8080"
 

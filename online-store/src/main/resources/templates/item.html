@@ -8,17 +8,20 @@
 </head>
 
 <body>
-    <a href="/orders" style="float:right;">
+    <a href="/orders" style="float:right;" th:if="${isUser}">
         <b>ЗАКАЗЫ &cudarrr;</b>
     </a>
-    <a href="/cart/items" style="float:right;">
+    <a href="/cart/items" style="float:right;" th:if="${isUser}">
         <b>КОРЗИНА &cudarrr;</b>
     </a>
     <a href="/main/items" style="float:right;">
         <b>ГЛАВНАЯ &cudarrr;</b>
     </a>
-    <a href="/logout" style="float:right; margin-right: 12px;">
+    <a href="/logout" style="float:right; margin-right: 12px;" th:if="${isUser}">
         <b>ВЫХОД</b>
+    </a>
+    <a href="/login" style="float:right; margin-right: 12px;" th:if="${!isUser}">
+        <b>ВОЙТИ</b>
     </a>
     <div style="width:70%;margin-left:auto;margin-right:auto;">
         <p>
@@ -31,7 +34,7 @@
         <p>
             <span th:text="${item.getDescription()}"></span>
         </p>
-        <form th:action="${'/items/'+item.getId()}" method="post">
+        <form th:action="${'/items/'+item.getId()}" method="post" th:if="${isUser}">
             <button name="action" value="minus">-</button>
             <span th:text="${item.getCount()}"></span>
             <button name="action" value="plus">+</button>
