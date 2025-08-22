@@ -39,3 +39,6 @@ payment:
   service:
     base-url: http://payment-service-app:8080
     payment-path: /payment
+    auth-server-token-url: http://keycloak:8080/realms/intershop-realm/protocol/openid-connect/token
+    client-id: online-store
+    client-secret: online-store-secret
