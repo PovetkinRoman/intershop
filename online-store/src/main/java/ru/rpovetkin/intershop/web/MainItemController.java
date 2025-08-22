@@ -67,24 +67,31 @@ public class MainItemController {
                                     .modelAttribute("isUser", isUser)
                                     .build();
                         })
+                )
+                .switchIfEmpty(
+                        itemService.findAllWithPagination(pageable, search)
+                                .collectList()
+                                .map(items -> Rendering.view("main")
+                                        .modelAttribute("items", items)
+                                        .modelAttribute("paging", new Paging(pageNumber, pageSize, false, false))
+                                        .modelAttribute("search", search)
+                                        .modelAttribute("sort", sort)
+                                        .modelAttribute("isUser", false)
+                                        .build()
+                                )
                 );
     }
 
     @PostMapping("/{id}")
     @PreAuthorize("hasAnyRole('USER','ADMIN')")
     public Mono<Rendering> changeItem(@PathVariable Long id, ServerWebExchange exchange) {
-        return Mono.zip(
-                ReactiveSecurityContextHolder.getContext()
-                        .map(ctx -> ctx.getAuthentication().getName()),
-                exchange.getFormData()
-        ).flatMap(tuple -> {
-            String username = tuple.getT1();
-            String action = tuple.getT2().getFirst("action");
-            log.debug("changeItem: id={}, action={}", id, action);
-
-            return itemService.changeCountItemsReactive(id, action, username)
-                    .then(Mono.just(Rendering.redirectTo("/main/items").build()));
-        });
+        return exchange.getFormData()
+                .flatMap(form -> {
+                    String action = form.getFirst("action");
+                    log.debug("changeItem: id={}, action={}", id, action);
+                    return itemService.changeCountItemsReactive(id, action)
+                            .then(Mono.just(Rendering.redirectTo("/main/items").build()));
+                });
     }
 
     @GetMapping("/{id}")

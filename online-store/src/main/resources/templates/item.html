@@ -37,6 +37,9 @@
         <p>
             <span th:text="${item.getDescription()}"></span>
         </p>
+        <p>
+            <span>Количество на витрине: </span><span th:text="${item.getCount()}"></span>
+        </p>
         <form th:action="${'/items/'+item.getId()}" method="post" th:if="${isUser}">
             <button class="btn" name="action" value="minus">-</button>
             <span th:text="${item.getCount()}"></span>

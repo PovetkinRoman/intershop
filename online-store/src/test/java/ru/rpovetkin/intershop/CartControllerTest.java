@@ -2,8 +2,12 @@ package ru.rpovetkin.intershop;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
+import org.springframework.security.config.web.server.ServerHttpSecurity;
+import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -28,7 +32,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @WebFluxTest(CartController.class)
-@Import({WebClientConfig.class, PaymentServiceProperties.class})
+@Import({WebClientConfig.class, PaymentServiceProperties.class, CartControllerTest.TestSecurityConfig.class})
 @TestPropertySource(properties = {
     "payment.service.base-url=http://localhost:8081"
 })
@@ -42,6 +46,17 @@ class CartControllerTest {
 
     @MockitoBean
     OrderService orderService;
+
+    @TestConfiguration
+    static class TestSecurityConfig {
+        @Bean
+        public SecurityWebFilterChain testSecurityWebFilterChain(ServerHttpSecurity http) {
+            return http
+                    .csrf(ServerHttpSecurity.CsrfSpec::disable)
+                    .authorizeExchange(ex -> ex.anyExchange().permitAll())
+                    .build();
+        }
+    }
 
     @Test
     void cartItems_shouldShowEmptyCart() {

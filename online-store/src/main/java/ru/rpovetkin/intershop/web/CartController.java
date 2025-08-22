@@ -44,9 +44,7 @@ public class CartController {
     @GetMapping
     @PreAuthorize("hasAnyRole('USER','ADMIN')")
     public Mono<String> cartItems(Model model, ServerWebExchange exchange) {
-        return ReactiveSecurityContextHolder.getContext()
-                .map(ctx -> ctx.getAuthentication().getName())
-                .flatMapMany(itemService::findAllInCartSorted)
+        return itemService.findAllInCartSorted()
                 .collectList()
                 .flatMap(items -> {
                     model.addAttribute("items", items);
@@ -82,16 +80,9 @@ public class CartController {
     @PostMapping("/{id}")
     @PreAuthorize("hasAnyRole('USER','ADMIN')")
     public Mono<String> cartChangeItem(@PathVariable(name = "id") Long id, ServerWebExchange exchange) {
-        return Mono.zip(
-                ReactiveSecurityContextHolder.getContext()
-                        .map(ctx -> ctx.getAuthentication().getName()),
-                exchange.getFormData()
-        ).flatMap(tuple -> {
-            String username = tuple.getT1();
-            String action = tuple.getT2().getFirst("action");
-            return itemService.changeCountItemsReactive(id, action, username)
-                    .thenReturn("redirect:/cart/items");
-        });
+        return exchange.getFormData()
+                .flatMap(form -> itemService.changeCountItemsReactive(id, form.getFirst("action")))
+                .thenReturn("redirect:/cart/items");
     }
 
     @PostMapping("/buy")
