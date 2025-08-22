@@ -1,0 +1,62 @@
+/* Базовые стили приложения */
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
+    Ubuntu, Cantarell, 'Fira Sans', 'Droid Sans', 'Helvetica Neue', Arial, sans-serif;
+  margin: 0;
+  padding: 0 16px;
+  background: #f6f7fb;
+  color: #222;
+}
+
+a {
+  color: #0b5fff;
+  text-decoration: none;
+}
+
+a:hover { text-decoration: underline; }
+
+.header {
+  display: flex;
+  gap: 16px;
+  justify-content: flex-end;
+  padding: 12px 0;
+}
+
+.container {
+  width: 100%;
+  max-width: 1080px;
+  margin: 0 auto;
+}
+
+.card {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  padding: 16px;
+}
+
+.table { width: 100%; border-collapse: collapse; }
+.table td { padding: 8px; vertical-align: top; }
+
+.btn {
+  display: inline-block;
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid #d0d7de;
+  background: #ffffff;
+  cursor: pointer;
+}
+.btn:hover { background: #f3f4f6; }
+.btn.primary { background: #0b5fff; border-color: #0b5fff; color: #fff; }
+.btn.primary:hover { background: #054adf; }
+.btn[disabled] { opacity: 0.6; cursor: not-allowed; }
+
+.badge { font-weight: bold; }
+
+.input, select {
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid #d0d7de;
+}
+
+.form-row { margin-bottom: 8px; }

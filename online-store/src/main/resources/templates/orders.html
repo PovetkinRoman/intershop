@@ -5,36 +5,43 @@
     <title>Заказы</title>
     <meta charset="UTF-8">
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <link rel="stylesheet" href="/css/app.css">
 </head>
 
 <body>
-<a href="/cart/items" style="float:right;">
-    <b>КОРЗИНА &cudarrr;</b>
-</a>
-<a href="/main/items" style="float:right;">
-    <b>ГЛАВНАЯ &cudarrr;</b>
-</a>
-<a href="/logout" style="float:right; margin-right: 12px;">
-    <b>ВЫХОД</b>
-</a>
-<table>
+<div class="header container">
+    <a href="/main/items" style="float:right;">
+        <b>ГЛАВНАЯ &cudarrr;</b>
+    </a>
+    <a href="/logout" style="float:right; margin-right: 12px;">
+        <b>ВЫХОД</b>
+    </a>
+</div>
+<div class="container card">
+<table class="table" style="width:70%;margin-left:auto;margin-right:auto;">
     <tr th:each="order : ${orders}">
         <td>
-            <h2>
-                <a th:text="'Заказ №' + ${order['id']}"
-                   th:href="'/orders/' + ${order['id']}"></a>
-            </h2>
-            <table>
-                <tr th:each="item : ${order['items']}">
-                    <td th:text="${item['title']} + ' (' + ${item['count']} + ' шт.) ' + ${item['total']} + ' руб.'"></td>
+            <table class="table card">
+                <tr>
+                    <td>
+                        <b th:text="${'Заказ № '+order.get('uuid')}"></b>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <ul>
+                            <li th:each="it : ${order.get('items')}" th:text="${it}"></li>
+                        </ul>
+                    </td>
+                    <td style="text-align:right">
+                        <b th:text="${order.get('totalSum')}+' руб.'"></b>
+                    </td>
                 </tr>
             </table>
-            <p>
-                <b th:text="'Сумма: ' + ${order['totalSum']} + ' руб.'"></b>
-            </p>
         </td>
     </tr>
 </table>
+</div>
 </body>
 
 </html>
