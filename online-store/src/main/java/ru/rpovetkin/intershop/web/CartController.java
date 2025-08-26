@@ -2,6 +2,8 @@ package ru.rpovetkin.intershop.web;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -40,7 +42,8 @@ public class CartController {
     }
 
     @GetMapping
-    public Mono<String> cartItems(Model model) {
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
+    public Mono<String> cartItems(Model model, ServerWebExchange exchange) {
         return itemService.findAllInCartSorted()
                 .collectList()
                 .flatMap(items -> {
@@ -75,18 +78,19 @@ public class CartController {
     }
 
     @PostMapping("/{id}")
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
     public Mono<String> cartChangeItem(@PathVariable(name = "id") Long id, ServerWebExchange exchange) {
         return exchange.getFormData()
-            .flatMap(formData -> {
-                String action = formData.getFirst("action");
-                return itemService.changeCountItemsReactive(id, action)
-                    .thenReturn("redirect:/cart/items");
-            });
+                .flatMap(form -> itemService.changeCountItemsReactive(id, form.getFirst("action")))
+                .thenReturn("redirect:/cart/items");
     }
 
     @PostMapping("/buy")
-    public Mono<String> cartBuyItems() {
-        return itemService.findAllInCartSorted()
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
+    public Mono<String> cartBuyItems(ServerWebExchange exchange) {
+        return ReactiveSecurityContextHolder.getContext()
+                .map(ctx -> ctx.getAuthentication().getName())
+                .flatMapMany(itemService::findAllInCartSorted)
                 .collectList()
                 .flatMap(items -> {
                     if (items.isEmpty()) {
@@ -101,11 +105,14 @@ public class CartController {
                             .onErrorReturn(false)
                             .flatMap(isPayed -> {
                                 if (!isPayed) {
-                                    return Mono.just("redirect:/cart/items?error=Недостаточно средств для оплаты");
+                                    String msg = java.net.URLEncoder.encode("Недостаточно средств для оплаты", java.nio.charset.StandardCharsets.UTF_8);
+                                    return Mono.just("redirect:/cart/items?error=" + msg);
                                 }
-                                return orderService.createOrder(Flux.fromIterable(items))
-                                        .flatMap(order -> itemService.setItemCountZeroAllInCart()
-                                                .thenReturn("redirect:/orders/" + order.getId() + "?newOrder=true"));
+                                return exchange.getPrincipal().map(java.security.Principal::getName)
+                                        .flatMap(username -> orderService.createOrder(Flux.fromIterable(items), username)
+                                                .flatMap(order -> itemService.setItemCountZeroAllInCart(username)
+                                                        .thenReturn("redirect:/orders/" + order.getId() + "?newOrder=true"))
+                                        );
                             });
                 })
                 .onErrorResume(e -> Mono.just("redirect:/cart?error=" + e.getMessage()));

@@ -23,6 +23,7 @@ public class Order {
     private Long id;
     private Boolean isPaid = Boolean.FALSE;
     private UUID uuid = UUID.randomUUID();
+    private Long userId;
 
     @Transient
     private BigDecimal totalSum;

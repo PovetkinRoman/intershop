@@ -25,7 +25,7 @@ services:
   online-store-app:
     build:
       context: .
-      dockerfile: online-store/Dockerfile
+      dockerfile: online-store/dockerfile
     ports:
       - "8080:8080"
     depends_on:
@@ -43,9 +43,23 @@ services:
   payment-service-app:
     build:
       context: .
-      dockerfile: payment-service/Dockerfile
+      dockerfile: payment-service/dockerfile
     ports:
       - "8081:8080"
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0.4
+    container_name: keycloak
+    ports:
+      - "8082:8080"
+    environment:
+      - KEYCLOAK_ADMIN=admin
+      - KEYCLOAK_ADMIN_PASSWORD=admin
+    volumes:
+      - ./keycloak/realm-export.json:/opt/keycloak/data/import/realm-export.json:ro
+    command: ["start-dev", "--import-realm"]
+    depends_on:
+      - db
 
 volumes:
   redis_data:

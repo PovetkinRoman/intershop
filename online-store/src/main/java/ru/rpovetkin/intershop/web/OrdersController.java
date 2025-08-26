@@ -2,6 +2,8 @@ package ru.rpovetkin.intershop.web;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -28,8 +30,10 @@ public class OrdersController {
     private final OrderItemRepository orderItemRepo;
 
     @GetMapping
-    public Mono<String> orders(Model model) {
-        return orderService.findAllOrders()
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
+    public Mono<String> orders(Model model, org.springframework.web.server.ServerWebExchange exchange) {
+        return exchange.getPrincipal().map(java.security.Principal::getName)
+                .flatMapMany(orderService::findAllOrdersByUsername)
                 .flatMap(order ->
                         orderItemRepo.findByOrderId(order.getId())
                                 .flatMap(orderItem ->
@@ -60,12 +64,15 @@ public class OrdersController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
     public Mono<String> order(
             @PathVariable Long id,
             @RequestParam(name = "newOrder", required = false) Boolean newOrder,
             Model model
     ) {
-        return orderService.findOrderById(id)
+        return ReactiveSecurityContextHolder.getContext()
+                .map(sc -> sc.getAuthentication().getName())
+                .flatMap(username -> orderService.findOrderByIdForUser(id, username))
                 .flatMap(order -> {
                     model.addAttribute("order", order);
                     model.addAttribute("id", order.getUuid());

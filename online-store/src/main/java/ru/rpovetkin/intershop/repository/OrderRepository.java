@@ -11,4 +11,7 @@ public interface OrderRepository extends R2dbcRepository<Order, Long> {
 
     @Query("SELECT * FROM orders WHERE is_paid = :isPaid")
     Flux<Order> findByIsPaid(boolean isPaid);
+
+    @Query("SELECT * FROM orders WHERE user_id = :userId ORDER BY id ASC")
+    Flux<Order> findAllByUserId(Long userId);
 }

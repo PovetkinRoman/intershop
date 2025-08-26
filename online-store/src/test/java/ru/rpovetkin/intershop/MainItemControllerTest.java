@@ -2,7 +2,12 @@ package ru.rpovetkin.intershop;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
+import org.springframework.security.config.web.server.ServerHttpSecurity;
+import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -26,6 +31,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @WebFluxTest(MainItemController.class)
+@Import(MainItemControllerTest.TestSecurityConfig.class)
 class MainItemControllerTest {
 
     @Autowired
@@ -33,6 +39,17 @@ class MainItemControllerTest {
 
     @MockitoBean
     ItemService itemService;
+
+    @TestConfiguration
+    static class TestSecurityConfig {
+        @Bean
+        public SecurityWebFilterChain testSecurityWebFilterChain(ServerHttpSecurity http) {
+            return http
+                    .csrf(ServerHttpSecurity.CsrfSpec::disable)
+                    .authorizeExchange(ex -> ex.anyExchange().permitAll())
+                    .build();
+        }
+    }
 
     @Test
     void showItems_get_item_id_1() {

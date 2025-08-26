@@ -5,19 +5,26 @@
     <title>Корзина товаров</title>
     <meta charset="UTF-8">
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <link rel="stylesheet" href="/css/app.css">
 </head>
 
 <body>
+<div class="header container">
 <a href="/orders" style="float:right;">
     <b>ЗАКАЗЫ &cudarrr;</b>
 </a>
 <a href="/main/items" style="float:right;">
     <b>ГЛАВНАЯ &cudarrr;</b>
 </a>
-<table style="width:70%;margin-left:auto;margin-right:auto;">
+<a href="/logout" style="float:right; margin-right: 12px;">
+    <b>ВЫХОД</b>
+</a>
+</div>
+<div class="container card">
+<table class="table" style="width:70%;margin-left:auto;margin-right:auto;">
     <tr th:each="item : ${items}">
         <td>
-            <table>
+            <table class="table card">
                 <tr>
                     <td>
                         <img width="300" height="300" th:src="${'http://localhost:8080/'+item.getImgPath()}">
@@ -35,10 +42,10 @@
                 <tr>
                     <td>
                         <form th:action="${'/cart/items/'+item.getId()}" method="post">
-                            <button name="action" value="minus">-</button>
+                            <button class="btn" name="action" value="minus">-</button>
                             <span th:text="${item.getCount()}"></span>
-                            <button name="action" value="plus">+</button>
-                            <button name="action" value="delete" style="float:right;">&cross;</button>
+                            <button class="btn" name="action" value="plus">+</button>
+                            <button class="btn" name="action" value="delete" style="float:right;">&cross;</button>
                         </form>
                     </td>
                 </tr>
@@ -55,12 +62,30 @@
             <div th:if="${paymentError}" style="color:red;text-align:right;">
                 <b th:text="${paymentError}"></b>
             </div>
-            <form action="/cart/items/buy" method="post" th:if="${!empty}">
-                <button th:disabled="${canBuy != null and !canBuy}">Купить</button>
+            <div th:if="${(canBuy != null and !canBuy) and (paymentError == null)}" style="color:#b45309;text-align:right;">
+                <b>Недостаточно средств для оплаты.</b>
+            </div>
+            <form id="buyForm" action="/cart/items/buy" method="post" th:if="${!empty}">
+                <button id="buyButton" type="submit" class="btn primary" th:disabled="${canBuy != null and !canBuy}">Купить</button>
             </form>
         </td>
     </tr>
 </table>
+</div>
+<script>
+  (function(){
+    var btn = document.getElementById('buyButton');
+    var form = document.getElementById('buyForm');
+    if (btn && form) {
+      btn.addEventListener('click', function(e){
+        if (!btn.disabled) {
+          // На случай, если что-то перехватывает submit
+          setTimeout(function(){ try { form.submit(); } catch(e) {} }, 0);
+        }
+      });
+    }
+  })();
+</script>
 </body>
 
 </html>

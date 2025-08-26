@@ -24,3 +24,28 @@ CREATE TABLE IF NOT EXISTS order_item (
 
 CREATE INDEX IF NOT EXISTS idx_order_item_order_id ON order_item(order_id);
 CREATE INDEX IF NOT EXISTS idx_order_item_item_id ON order_item(item_id);
+
+CREATE TABLE IF NOT EXISTS users (
+                       id SERIAL PRIMARY KEY,
+                       username VARCHAR(50) UNIQUE NOT NULL,
+                       password VARCHAR(100) NOT NULL,
+                       enabled BOOLEAN NOT NULL DEFAULT TRUE,
+                       role VARCHAR(200) NOT NULL DEFAULT 'USER'
+);
+
+CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
+
+-- Ownership for orders and per-user carts
+ALTER TABLE IF EXISTS orders
+    ADD COLUMN IF NOT EXISTS user_id BIGINT REFERENCES users(id);
+
+CREATE TABLE IF NOT EXISTS cart_item (
+    id BIGSERIAL PRIMARY KEY,
+    user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    item_id BIGINT NOT NULL REFERENCES item(id),
+    count INTEGER NOT NULL,
+    UNIQUE (user_id, item_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_cart_item_user_id ON cart_item(user_id);
+CREATE INDEX IF NOT EXISTS idx_cart_item_item_id ON cart_item(item_id);

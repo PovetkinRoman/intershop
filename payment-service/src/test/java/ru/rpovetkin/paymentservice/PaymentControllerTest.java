@@ -2,15 +2,18 @@ package ru.rpovetkin.paymentservice;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.security.config.web.server.ServerHttpSecurity;
+import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import ru.rpovetkin.paymentservice.conf.PaymentProperties;
 import ru.rpovetkin.paymentservice.web.PaymentController;
 
 @WebFluxTest(controllers = PaymentController.class)
-@Import(PaymentProperties.class)
+@Import({PaymentProperties.class, PaymentControllerTest.TestSecurityConfig.class})
 @TestPropertySource(properties = {
     "payment.initial-balance=1000.00"
 })
@@ -18,6 +21,17 @@ public class PaymentControllerTest {
 
     @Autowired
     private WebTestClient webTestClient;
+
+    @TestConfiguration
+    static class TestSecurityConfig {
+        @org.springframework.context.annotation.Bean
+        public SecurityWebFilterChain testSecurityWebFilterChain(ServerHttpSecurity http) {
+            return http
+                    .csrf(ServerHttpSecurity.CsrfSpec::disable)
+                    .authorizeExchange(ex -> ex.anyExchange().permitAll())
+                    .build();
+        }
+    }
 
     @Test
     void checkBalance_enoughMoney_returnsTrue() {
