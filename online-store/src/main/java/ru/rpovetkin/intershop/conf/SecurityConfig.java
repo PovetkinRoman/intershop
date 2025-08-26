@@ -45,6 +45,10 @@ public class SecurityConfig {
             "/cart/**", "/orders/**"
     };
 
+    private static final String[] LOGOUT_COOKIE_NAMES = {
+            "SESSION", "JSESSIONID", "XSRF-TOKEN", "SPRING_SECURITY_SAVED_REQUEST"
+    };
+
     @Bean
     public SecurityWebFilterChain springSecurityFilterChain(
             ServerHttpSecurity http,
@@ -113,7 +117,7 @@ public class SecurityConfig {
                                     .build());
                         });
                         // Явно чистим стандартные служебные куки, если они были
-                        for (String cookieName : new String[]{"SESSION", "JSESSIONID", "XSRF-TOKEN", "SPRING_SECURITY_SAVED_REQUEST"}) {
+                        for (String cookieName : LOGOUT_COOKIE_NAMES) {
                             exchange.getResponse().addCookie(ResponseCookie.from(cookieName, "")
                                     .path("/")
                                     .maxAge(0)
