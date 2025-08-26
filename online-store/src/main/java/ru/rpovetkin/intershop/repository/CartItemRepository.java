@@ -1,5 +1,6 @@
 package ru.rpovetkin.intershop.repository;
 
+import org.springframework.data.r2dbc.repository.Modifying;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import org.springframework.stereotype.Repository;
@@ -17,9 +18,11 @@ public interface CartItemRepository extends ReactiveCrudRepository<CartItem, Lon
     Mono<CartItem> findByUserIdAndItemId(Long userId, Long itemId);
 
     @Query("DELETE FROM cart_item WHERE user_id = :userId")
+    @Modifying
     Mono<Void> deleteByUserId(Long userId);
 
     @Query("DELETE FROM cart_item WHERE user_id = :userId AND item_id = :itemId")
+    @Modifying
     Mono<Void> deleteByUserIdAndItemId(Long userId, Long itemId);
 }
 
